@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "/Users/paolosarmiento/.pyenv/versions/3.11.15/bin/python3",
+      "args": [
+        "-m",
+        "code_review_graph",
+        "serve"
+      ],
+      "cwd": "/Users/paolosarmiento/grapplr",
+      "type": "stdio",
+      "env": []
+    }
+  }
+}
