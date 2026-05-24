@@ -589,32 +589,6 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
   </div>);
 });
 
-function PartnerDetailModal({partner,sessions,onClose,onSave,onDelete}){
-  const [en,setEn]=useState({name:partner.name,belt:partner.belt,gym:partner.gym||"",strengths:partner.strengths||"",weaknesses:partner.weaknesses||"",gameStyle:partner.gameStyle||"",notes:partner.notes||""});
-  const sb=BELTS.find(x=>x.id===en.belt)||BELTS[0];
-  const pSess=sessions.filter(s=>s.partner&&s.partner.toLowerCase()===partner.name.toLowerCase());
-  const lastT=pSess.length>0?pSess[0].date:"—";
-  const avgSubs=pSess.length>0?Math.round(pSess.reduce((a,s)=>a+(s.taps_given||0),0)/pSess.length*10)/10:0;
-  const avgTapped=pSess.length>0?Math.round(pSess.reduce((a,s)=>a+(s.taps_received||0),0)/pSess.length*10)/10:0;
-  return(<BottomSheet onClose={onClose} title="Edit Partner">
-    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 12px",background:"#2C2C2E",borderRadius:14}}>
-      <div style={{width:36,height:36,borderRadius:"50%",background:sb.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:14,fontWeight:700,color:sb.text}}>{en.name.charAt(0)||"?"}</span></div>
-      <div style={{flex:1,minWidth:0}}><p style={{margin:0,fontSize:13,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{en.name||"Partner"}</p><p style={{margin:0,fontSize:11,color:"#555"}}>{sb.label} belt{en.gym?" · "+en.gym:""}</p></div>
-      <span style={{fontSize:12,color:POS,fontWeight:600,flexShrink:0}}>{pSess.length} sessions</span>
-    </div>
-    <div style={{marginBottom:12}}><Lbl>Name</Lbl><input value={en.name} onChange={e=>setEn(p=>({...p,name:e.target.value}))} placeholder="Partner name"/></div>
-    <div style={{marginBottom:14}}><Lbl>Belt</Lbl><BeltPicker value={en.belt} onChange={v=>setEn(p=>({...p,belt:v}))}/></div>
-    <div style={{marginBottom:14}}><Lbl>Gym</Lbl><input value={en.gym} onChange={e=>setEn(p=>({...p,gym:e.target.value}))} placeholder="e.g. Flow Studio"/></div>
-    <SH>Scouting Notes</SH>
-    <div style={{marginBottom:10}}><Lbl c={POS}>Strengths</Lbl><textarea value={en.strengths} onChange={e=>setEn(p=>({...p,strengths:e.target.value}))} placeholder="What are they dangerous at?" style={{minHeight:52}}/></div>
-    <div style={{marginBottom:10}}><Lbl c="#E24B4A">Weaknesses</Lbl><textarea value={en.weaknesses} onChange={e=>setEn(p=>({...p,weaknesses:e.target.value}))} placeholder="Where can you attack?" style={{minHeight:52}}/></div>
-    <div style={{marginBottom:10}}><Lbl>Game style</Lbl><input value={en.gameStyle} onChange={e=>setEn(p=>({...p,gameStyle:e.target.value}))} placeholder="e.g. Guard Player"/></div>
-    <div style={{marginBottom:16}}><Lbl>Notes</Lbl><textarea value={en.notes} onChange={e=>setEn(p=>({...p,notes:e.target.value}))} placeholder="Anything else" style={{minHeight:52}}/></div>
-    <SH>Training Stats</SH>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>{[{l:"Sessions",v:pSess.length,c:"#fff"},{l:"Last trained",v:lastT,c:"#fff"},{l:"Avg subs",v:avgSubs,c:POS},{l:"Avg tapped",v:avgTapped,c:"#E24B4A"}].map(m=><div key={m.l} style={{background:"#2C2C2E",borderRadius:12,padding:"10px",textAlign:"center"}}><p style={{margin:0,fontSize:m.l==="Last trained"?11:18,fontWeight:700,color:m.c}}>{m.v}</p><p style={{margin:"3px 0 0",fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>)}</div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><button onClick={onDelete} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button><PBtn onClick={()=>onSave(en)}>Save changes</PBtn></div>
-  </BottomSheet>);
-}
 
 //  LIBRARY
 const LibBackBtn=({label,right,onBack})=>(<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><button onClick={onBack} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff"}}>{label}</h2>{right}</div>);
@@ -627,7 +601,7 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
   const [addName,setAddName]=useState("");
   const [addCat,setAddCat]=useState("Submissions");
   const [selPartner,setSelPartner]=useState(null);
-  useEffect(()=>{document.body.style.overflow=selPartner?"hidden":"";return()=>{document.body.style.overflow="";};},[selPartner]);
+  const [editPartnerData,setEditPartnerData]=useState(null);
   const cats=useMemo(()=>["All",...new Set(techniques.map(t=>t.cat))],[techniques]);
   const filtered=useMemo(()=>techCat==="All"?techniques:techniques.filter(t=>t.cat===techCat),[techniques,techCat]);
   const mDone=useMemo(()=>mobility.filter(m=>m.done).length,[mobility]);
@@ -642,6 +616,39 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
     {addOpen&&<BottomSheet onClose={()=>setAddOpen(false)} title="Add technique"><div style={{marginBottom:12}}><Lbl>Name</Lbl><input value={addName} onChange={e=>setAddName(e.target.value)} placeholder="e.g. Leg Lock" autoFocus/></div><div style={{marginBottom:20}}><Lbl>Category</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{["Submissions","Guard","Takedowns","Escapes","Sweeps","Other"].map(x=><Pill key={x} active={addCat===x} onClick={()=>setAddCat(x)} s={{fontSize:12}}>{x}</Pill>)}</div></div><PBtn onClick={()=>{if(addName.trim()){setTechniques(p=>[...p,{id:Date.now(),name:addName.trim(),cat:addCat,skill:1}]);setAddName("");setAddOpen(false);}}} disabled={!addName.trim()}>Add technique</PBtn></BottomSheet>}
     {showSkillDefs&&<BottomSheet onClose={()=>setShowSkillDefs(false)} title="Skill levels explained">{SKILL_DEFS.slice(1).map((def,i)=>(<div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:16}}><span style={{fontSize:12,color:SKILL_COLORS[i+1],fontWeight:700,minWidth:90}}>{SKILL_LABELS[i+1]}</span><p style={{margin:0,fontSize:13,color:"#8E8E93",lineHeight:1.6,flex:1}}>{def}</p></div>))}</BottomSheet>}
   </div>);
+
+  // Partner edit — full-page view (no fixed modal, no iOS overflow issues)
+  if(libSec==="partners"&&selPartner){
+    const sb=BELTS.find(x=>x.id===(editPartnerData||selPartner).belt)||BELTS[0];
+    const ep=editPartnerData||{name:selPartner.name,belt:selPartner.belt,gym:selPartner.gym||"",strengths:selPartner.strengths||"",weaknesses:selPartner.weaknesses||"",gameStyle:selPartner.gameStyle||"",notes:selPartner.notes||""};
+    const pSess=sessions.filter(s=>s.partner&&s.partner.toLowerCase()===selPartner.name.toLowerCase());
+    const lastT=pSess.length>0?pSess[0].date:"—";
+    const avgSubs=pSess.length>0?Math.round(pSess.reduce((a,s)=>a+(s.taps_given||0),0)/pSess.length*10)/10:0;
+    const avgTapped=pSess.length>0?Math.round(pSess.reduce((a,s)=>a+(s.taps_received||0),0)/pSess.length*10)/10:0;
+    const setEp=fn=>setEditPartnerData(p=>fn(p||ep));
+    return(<div className="fade-in">
+      <LibBackBtn onBack={()=>{setSelPartner(null);setEditPartnerData(null);}} label="Edit Partner"/>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 12px",background:"#2C2C2E",borderRadius:14}}>
+        <div style={{width:36,height:36,borderRadius:"50%",background:sb.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:14,fontWeight:700,color:sb.text}}>{ep.name.charAt(0)||"?"}</span></div>
+        <div style={{flex:1,minWidth:0}}><p style={{margin:0,fontSize:13,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ep.name||"Partner"}</p><p style={{margin:0,fontSize:11,color:"#555"}}>{sb.label} belt{ep.gym?" · "+ep.gym:""}</p></div>
+        <span style={{fontSize:12,color:POS,fontWeight:600,flexShrink:0}}>{pSess.length} sessions</span>
+      </div>
+      <div style={{marginBottom:12}}><Lbl>Name</Lbl><input value={ep.name} onChange={e=>setEp(p=>({...p,name:e.target.value}))} placeholder="Partner name"/></div>
+      <div style={{marginBottom:14}}><Lbl>Belt</Lbl><BeltPicker value={ep.belt} onChange={v=>setEp(p=>({...p,belt:v}))}/></div>
+      <div style={{marginBottom:14}}><Lbl>Gym</Lbl><input value={ep.gym} onChange={e=>setEp(p=>({...p,gym:e.target.value}))} placeholder="e.g. Flow Studio"/></div>
+      <SH>Scouting Notes</SH>
+      <div style={{marginBottom:10}}><Lbl c={POS}>Strengths</Lbl><textarea value={ep.strengths} onChange={e=>setEp(p=>({...p,strengths:e.target.value}))} placeholder="What are they dangerous at?" style={{minHeight:52}}/></div>
+      <div style={{marginBottom:10}}><Lbl c="#E24B4A">Weaknesses</Lbl><textarea value={ep.weaknesses} onChange={e=>setEp(p=>({...p,weaknesses:e.target.value}))} placeholder="Where can you attack?" style={{minHeight:52}}/></div>
+      <div style={{marginBottom:10}}><Lbl>Game style</Lbl><input value={ep.gameStyle} onChange={e=>setEp(p=>({...p,gameStyle:e.target.value}))} placeholder="e.g. Guard Player"/></div>
+      <div style={{marginBottom:16}}><Lbl>Notes</Lbl><textarea value={ep.notes} onChange={e=>setEp(p=>({...p,notes:e.target.value}))} placeholder="Anything else" style={{minHeight:52}}/></div>
+      <SH>Training Stats</SH>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>{[{l:"Sessions",v:pSess.length,c:"#fff"},{l:"Last trained",v:lastT,c:"#fff"},{l:"Avg subs",v:avgSubs,c:POS},{l:"Avg tapped",v:avgTapped,c:"#E24B4A"}].map(m=><div key={m.l} style={{background:"#2C2C2E",borderRadius:12,padding:"10px",textAlign:"center"}}><p style={{margin:0,fontSize:m.l==="Last trained"?11:18,fontWeight:700,color:m.c}}>{m.v}</p><p style={{margin:"3px 0 0",fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>)}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+        <button onClick={()=>{setPartners(prev=>prev.filter(x=>x.id!==selPartner.id));setSelPartner(null);setEditPartnerData(null);}} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button>
+        <PBtn onClick={()=>{setPartners(prev=>prev.map(x=>x.id===selPartner.id?{...x,...ep}:x));setSelPartner(null);setEditPartnerData(null);}}>Save changes</PBtn>
+      </div>
+    </div>);
+  }
 
   if(libSec==="partners")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Training Partners" right={<button onClick={onAddPartner} style={{padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button>}/>
     {partners.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>No partners added yet</p></div>}
@@ -661,7 +668,6 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
         </div>
       </div>
     </div>);})}
-    {selPartner&&<PartnerDetailModal partner={selPartner} sessions={sessions} onClose={()=>setSelPartner(null)} onSave={(en)=>{setPartners(prev=>prev.map(x=>x.id===selPartner.id?{...x,...en}:x));setSelPartner(null);}} onDelete={()=>{setPartners(prev=>prev.filter(x=>x.id!==selPartner.id));setSelPartner(null);}}/>}
   </div>);
 
   if(libSec==="mobility")return(<div className="fade-in"><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}><button onClick={()=>setLibSec(null)} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff"}}>BJJ Warmup</h2><span style={{fontSize:13,color:"#555"}}>{mDone}/{mobility.length}</span></div>
