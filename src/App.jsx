@@ -112,7 +112,6 @@ function calcPersonalBests(sessions){
 }
 function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function uid(){return `${Date.now()}-${Math.random().toString(36).slice(2,7)}`;}
-const MEDAL_EMOJI={Gold:"🥇",Silver:"🥈",Bronze:"🥉",None:"—"};
 function getMedals(comp){const r=[];if(comp.joinedGi){if(comp.giWeightMedal&&comp.giWeightMedal!=="None")r.push({label:"Gi Weight",medal:comp.giWeightMedal,color:MEDAL_COLORS[comp.giWeightMedal]});if(comp.giAbsMedal&&comp.giAbsMedal!=="None")r.push({label:"Gi Abs",medal:comp.giAbsMedal,color:MEDAL_COLORS[comp.giAbsMedal]});}if(comp.joinedNogi){if(comp.nogiWeightMedal&&comp.nogiWeightMedal!=="None")r.push({label:"No-Gi Weight",medal:comp.nogiWeightMedal,color:MEDAL_COLORS[comp.nogiWeightMedal]});if(comp.nogiAbsMedal&&comp.nogiAbsMedal!=="None")r.push({label:"No-Gi Abs",medal:comp.nogiAbsMedal,color:MEDAL_COLORS[comp.nogiAbsMedal]});}return r;}
 
 //  FIRESTORE HOOK 
@@ -181,8 +180,8 @@ const SCard=memo(function SCard({s,onDelete,onEdit}){
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
           <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{s.duration} min{s.partner?` · ${s.partner}`:""}</p>
           <div style={{display:"flex",gap:2,flexShrink:0}}>
-            {onEdit&&<button onClick={e=>{e.stopPropagation();onEdit(s);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}>✎</button>}
-            {onDelete&&<button onClick={e=>{e.stopPropagation();onDelete(s.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}></button>}
+            {onEdit&&<button onClick={e=>{e.stopPropagation();onEdit(s);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>}
+            {onDelete&&<button onClick={e=>{e.stopPropagation();onDelete(s.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>}
           </div>
         </div>
         {s.notes&&<p style={{margin:"0 0 6px",fontSize:13,color:"#8E8E93",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.notes}</p>}
@@ -257,7 +256,7 @@ function Onboarding({onDone}){
         <div style={{textAlign:"center"}}><p style={{margin:0,fontSize:72,fontWeight:800,color:LIME,lineHeight:1}}>{f.weeklyGoal}</p><p style={{margin:"6px 0 0",fontSize:14,color:"#8E8E93"}}>sessions / week</p></div>
         <button onClick={()=>sv("weeklyGoal",Math.min(7,f.weeklyGoal+1))} style={{width:56,height:56,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",fontSize:28,color:LIME_TXT,fontWeight:700,fontFamily:"inherit"}}>+</button>
       </div>
-      <PBtn onClick={()=>onDone({...f,onboarded:true})} glow>Let's roll </PBtn>
+      <PBtn onClick={()=>onDone({...f,onboarded:true})} glow>Let's roll →</PBtn>
     </div>
   ];
   return(
@@ -309,12 +308,12 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
           <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:"radial-gradient(circle at 50% 0%,rgba(255,140,0,0.08),transparent 70%)",pointerEvents:"none"}}/>
           <p style={{margin:"0 0 4px",fontSize:11,fontWeight:600,color:"#FF8C00",textTransform:"uppercase",letterSpacing:"1px"}}>Training Streak</p>
           <p className="streak-num" style={{margin:0,fontSize:80,fontWeight:900,color:"#FF8C00",lineHeight:1}}>{streak}</p>
-          <p style={{margin:"4px 0 0",fontSize:14,color:"rgba(255,140,0,0.7)"}}>{streak===1?"day":"days"} in a row{streak>=7?" ":streak>=3?" ":""}</p>
+          <p style={{margin:"4px 0 0",fontSize:14,color:"rgba(255,140,0,0.7)"}}>{streak===1?"day":"days"} in a row{streak>=7?" — keep going!":streak>=3?" — on a roll!":""}</p>
           {streak>=3&&<p style={{margin:"8px 0 0",fontSize:12,color:"rgba(255,140,0,0.5)"}}>Personal best: {pbs.bestWeek} sessions in a week</p>}
         </div>
       ):(
         <div style={{...card,textAlign:"center",padding:"20px",marginBottom:12,borderStyle:"dashed"}}>
-          <p style={{margin:"0 0 4px",fontSize:28}}></p>
+          <i className="ti ti-flame" style={{fontSize:28,color:"#555",display:"block",marginBottom:4}}/>
           <p style={{margin:"0 0 4px",fontSize:15,fontWeight:600,color:"#fff"}}>Start your streak today</p>
           <p style={{margin:0,fontSize:13,color:"#555"}}>Log a session to begin your journey</p>
         </div>
@@ -338,7 +337,7 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
       {/* Weekly Challenge */}
       <div style={{...card,marginBottom:12,borderLeft:`3px solid ${challengeDone?POS:LIME}`}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-          <p style={{margin:0,fontSize:11,fontWeight:700,color:challengeDone?POS:LIME,textTransform:"uppercase",letterSpacing:"0.8px"}}>{challengeDone?" Challenge complete!":"Weekly challenge"}</p>
+          <p style={{margin:0,fontSize:11,fontWeight:700,color:challengeDone?POS:LIME,textTransform:"uppercase",letterSpacing:"0.8px"}}>{challengeDone?"Challenge complete!":"Weekly challenge"}</p>
           <span style={{fontSize:12,color:"#555"}}>{challengeProgress.current}/{challengeProgress.target}</span>
         </div>
         <p style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:"#fff"}}>{challenge.title}</p>
@@ -396,7 +395,7 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
       <SH>Recent sessions</SH>
       {sessions.length===0?(
         <div style={{textAlign:"center",padding:"48px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}>
-          <p style={{margin:"0 0 8px",fontSize:44}}></p>
+          <i className="ti ti-tournament" style={{fontSize:44,color:"#555",display:"block",marginBottom:8}}/>
           <p style={{margin:"0 0 4px",fontSize:16,color:"#fff",fontWeight:600}}>No sessions yet</p>
           <p style={{margin:"0 0 20px",fontSize:13,color:"#555"}}>Every black belt started here</p>
           <button onClick={onLog} style={{padding:"12px 28px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontWeight:700,fontSize:14,fontFamily:"inherit"}}>Log your first session →</button>
@@ -427,7 +426,7 @@ const Journal=memo(function Journal({journal,onAdd}){return(<div className="fade
     <p style={{margin:0,fontSize:13,color:"#555"}}>{journal.length} entries</p>
     <button onClick={onAdd} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ New entry</button>
   </div>
-  {journal.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:"0 0 8px",fontSize:32}}></p><p style={{margin:"0 0 4px",fontSize:15,color:"#fff",fontWeight:600}}>Your journal is empty</p><p style={{margin:0,fontSize:13,color:"#555"}}>After a session, write a quick debrief. It compounds.</p></div>}
+  {journal.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><i className="ti ti-notebook" style={{fontSize:32,color:"#555",display:"block",marginBottom:8}}/><p style={{margin:"0 0 4px",fontSize:15,color:"#fff",fontWeight:600}}>Your journal is empty</p><p style={{margin:0,fontSize:13,color:"#555"}}>After a session, write a quick debrief. It compounds.</p></div>}
   {journal.map(e=>(<div key={e.id} style={card}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
       <span style={{fontSize:13,fontWeight:500,color:"#fff"}}>{e.date}</span>
@@ -453,17 +452,17 @@ function AICoach({sessions,profile}){
     const totalSubs=last20.reduce((a,s)=>a+(s.taps_given||0),0);
     const totalTapped=last20.reduce((a,s)=>a+(s.taps_received||0),0);
     const subRate=last20.length>0?Math.round(totalSubs/last20.length*10)/10:0;
-    if(totalTapped>totalSubs*1.5)insights.push({icon:"",title:"Defensive gaps detected",body:`You're being submitted ${totalTapped} times vs your ${totalSubs} submissions in your last ${last20.length} sessions. Your defense needs attention. Focus on positional escapes.`,priority:"high"});
-    if(subRate>=1)insights.push({icon:"",title:"Submission machine",body:`You're averaging ${subRate} submissions per session. Elite efficiency. Keep hunting finishes — you're doing something right.`,priority:"good"});
+    if(totalTapped>totalSubs*1.5)insights.push({title:"Defensive gaps detected",body:`You're being submitted ${totalTapped} times vs your ${totalSubs} submissions in your last ${last20.length} sessions. Your defense needs attention. Focus on positional escapes.`,priority:"high"});
+    if(subRate>=1)insights.push({title:"Submission machine",body:`You're averaging ${subRate} submissions per session. Elite efficiency. Keep hunting finishes — you're doing something right.`,priority:"good"});
     const giCount=last20.filter(s=>s.type==="Gi").length;
     const nogiCount=last20.filter(s=>s.type==="No-Gi").length;
-    if(giCount>0&&nogiCount===0)insights.push({icon:"",title:"Try No-Gi",body:"You haven't trained No-Gi recently. Cross-training removes the gi grips and will expose weaknesses in your base game.",priority:"medium"});
-    if(nogiCount>0&&giCount===0)insights.push({icon:"",title:"Get back in the gi",body:"Gi training builds patience, grips, and technical precision. Mix it in — the collar grips will tighten your whole game.",priority:"medium"});
+    if(giCount>0&&nogiCount===0)insights.push({title:"Try No-Gi",body:"You haven't trained No-Gi recently. Cross-training removes the gi grips and will expose weaknesses in your base game.",priority:"medium"});
+    if(nogiCount>0&&giCount===0)insights.push({title:"Get back in the gi",body:"Gi training builds patience, grips, and technical precision. Mix it in — the collar grips will tighten your whole game.",priority:"medium"});
     const drillCount=last20.filter(s=>s.type==="Drilling").length;
-    if(drillCount===0)insights.push({icon:"",title:"Add drilling sessions",body:"You haven't logged any drilling sessions recently. Deliberate drilling is how techniques become automatic under pressure.",priority:"medium"});
+    if(drillCount===0)insights.push({title:"Add drilling sessions",body:"You haven't logged any drilling sessions recently. Deliberate drilling is how techniques become automatic under pressure.",priority:"medium"});
     const streak=calcStreak(sessions);
-    if(streak>=7)insights.push({icon:"",title:`${streak}-day streak!`,body:"Consistency is the single greatest predictor of improvement in BJJ. You're building something real right now.",priority:"good"});
-    if(profile.favPositions?.length>0)insights.push({icon:"",title:`${profile.favPositions[0]} is your game`,body:`As a ${profile.gameStyle||"grappler"}, invest in your entries to ${profile.favPositions[0]}. Master the setups, not just the position itself.`,priority:"medium"});
+    if(streak>=7)insights.push({title:`${streak}-day streak!`,body:"Consistency is the single greatest predictor of improvement in BJJ. You're building something real right now.",priority:"good"});
+    if(profile.favPositions?.length>0)insights.push({title:`${profile.favPositions[0]} is your game`,body:`As a ${profile.gameStyle||"grappler"}, invest in your entries to ${profile.favPositions[0]}. Master the setups, not just the position itself.`,priority:"medium"});
     return insights.slice(0,4);
   },[sessions,profile]);
 
@@ -486,13 +485,13 @@ function AICoach({sessions,profile}){
     {ruleInsights.length>0&&<div style={{marginBottom:20}}>
       <SH>Your coaching report</SH>
       {ruleInsights.map((ins,i)=>(<div key={i} style={{...card,borderLeft:`3px solid ${ins.priority==="high"?"#E24B4A":ins.priority==="good"?POS:LIME}`}}>
-        <p style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:"#fff"}}>{ins.icon} {ins.title}</p>
+        <p style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:"#fff"}}>{ins.title}</p>
         <p style={{margin:0,fontSize:13,color:"#8E8E93",lineHeight:1.65}}>{ins.body}</p>
       </div>))}
     </div>}
 
     {sessions.length===0&&<div style={{textAlign:"center",padding:"48px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:20}}>
-      <p style={{margin:"0 0 8px",fontSize:36}}></p>
+      <i className="ti ti-chart-bar" style={{fontSize:36,color:"#555",display:"block",marginBottom:8}}/>
       <p style={{margin:"0 0 4px",fontSize:15,color:"#fff",fontWeight:600}}>No data yet</p>
       <p style={{margin:0,fontSize:13,color:"#555"}}>Log 3+ sessions to unlock your coaching report</p>
     </div>}
@@ -518,8 +517,8 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
   const weeklyData=useMemo(()=>{const now=Date.now();return[...Array(6)].map((_,i)=>{const start=new Date(now-(5-i)*7*864e5),end=new Date(now-(4-i)*7*864e5);const mins=sessions.filter(s=>{const d=new Date(s.date);return d>=start&&d<end;}).reduce((a,s)=>a+(s.duration||0),0);return{week:`${start.getMonth()+1}/${start.getDate()}`,hours:Math.round(mins/60*10)/10};});},[sessions]);
   const compStats=useMemo(()=>{const w=competitions.reduce((a,c)=>a+(c.wins||0),0),l=competitions.reduce((a,c)=>a+(c.losses||0),0);return{wins:w,losses:l,rate:w+l>0?Math.round(w/(w+l)*100):0};},[competitions]);
   const pbs=useMemo(()=>calcPersonalBests(sessions),[sessions]);
-  const toggleGoal=useCallback(id=>{setGoals(p=>{const g=p.find(x=>x.id===id);if(!g)return p;const done=!g.done;if(done)showToast(" Goal achieved! Keep pushing.");else showToast("Goal re-opened.");return p.map(x=>x.id===id?{...x,done}:x);});},[setGoals,showToast]);
-  const deleteComp=id=>{setCompetitions(p=>p.filter(x=>x.id!==id));setConfirmDel(null);showToast("Competition removed");};
+  const toggleGoal=useCallback(id=>{setGoals(p=>{const g=p.find(x=>x.id===id);if(!g)return p;const done=!g.done;if(done)showToast("Goal achieved! Keep pushing.");else showToast("Goal re-opened.");return p.map(x=>x.id===id?{...x,done}:x);});},[setGoals,showToast]);
+  const deleteComp=id=>{setCompetitions(p=>p.filter(x=>x.id!==id));showToast("Competition removed");};
 
   return(<div className="fade-in">
     <SegCtrl opts={[["coach","Coach"],["stats","Stats"],["comp","Comp"],["goals","Goals"]]} value={sub} onChange={setSub}/>
@@ -549,8 +548,8 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
               <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{comp.event}</p>
               <div style={{display:"flex",gap:2,flexShrink:0,marginLeft:8}}>
-                <button onClick={e=>{e.stopPropagation();onEditComp(comp);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}>✎</button>
-                <button onClick={e=>{e.stopPropagation();deleteComp(comp.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}></button>
+                <button onClick={e=>{e.stopPropagation();onEditComp(comp);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>
+                <button onClick={e=>{e.stopPropagation();deleteComp(comp.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>
               </div>
             </div>
             <p style={{margin:"0 0 6px",fontSize:12,color:"#555"}}>{comp.date}{comp.location?" · "+comp.location:""}</p>
@@ -567,9 +566,9 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
     {sub==="goals"&&<div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><p style={{margin:0,fontSize:13,color:"#555"}}>{goals.filter(g=>!g.done).length} active</p><button onClick={onAddGoal} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add goal</button></div>
       {goals.filter(g=>!g.done).length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}><p style={{margin:0,fontSize:15,color:"#555"}}>No active goals. Set one to stay focused.</p></div>}
-      {goals.filter(g=>!g.done).map(g=>(<div key={g.id} style={card}><div style={{display:"flex",alignItems:"center",gap:12}}><button onClick={()=>toggleGoal(g.id)} style={{width:44,height:44,borderRadius:"50%",border:"2px solid #3A3A3C",background:"transparent",cursor:"pointer",flexShrink:0}}/><div style={{flex:1}}><p style={{margin:"0 0 5px",fontSize:14,fontWeight:500,color:"#fff"}}>{g.title}</p><div style={{display:"flex",gap:8}}><span style={{fontSize:11,padding:"2px 8px",borderRadius:50,background:LIME_DIM,color:LIME_TXT,fontWeight:700}}>{g.cat}</span>{g.deadline&&<span style={{fontSize:11,color:"#555"}}>Due {g.deadline}</span>}</div></div><div style={{display:"flex",gap:6}}><button onClick={()=>setEditGoal(g)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:13}}>✎</button><button onClick={()=>setGoals(p=>p.filter(x=>x.id!==g.id))} style={{width:36,height:36,borderRadius:"50%",background:"#E24B4A18",border:"none",cursor:"pointer",color:"#E24B4A",fontSize:13}}>✕</button></div></div></div>))}
+      {goals.filter(g=>!g.done).map(g=>(<div key={g.id} style={card}><div style={{display:"flex",alignItems:"center",gap:12}}><button onClick={()=>toggleGoal(g.id)} style={{width:44,height:44,borderRadius:"50%",border:"2px solid #3A3A3C",background:"transparent",cursor:"pointer",flexShrink:0}}/><div style={{flex:1}}><p style={{margin:"0 0 5px",fontSize:14,fontWeight:500,color:"#fff"}}>{g.title}</p><div style={{display:"flex",gap:8}}><span style={{fontSize:11,padding:"2px 8px",borderRadius:50,background:LIME_DIM,color:LIME_TXT,fontWeight:700}}>{g.cat}</span>{g.deadline&&<span style={{fontSize:11,color:"#555"}}>Due {g.deadline}</span>}</div></div><div style={{display:"flex",gap:6}}><button onClick={()=>setEditGoal(g)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:13}}><i className="ti ti-pencil" style={{fontSize:13}}/></button><button onClick={()=>setGoals(p=>p.filter(x=>x.id!==g.id))} style={{width:36,height:36,borderRadius:"50%",background:"#E24B4A18",border:"none",cursor:"pointer",color:"#E24B4A",fontSize:13}}>✕</button></div></div></div>))}
     {editGoal&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setEditGoal(null)}><div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",padding:"24px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>Edit goal</h3><button onClick={()=>setEditGoal(null)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:18}}>×</button></div><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>Goal</p><input value={editGoal.title} onChange={e=>setEditGoal(p=>({...p,title:e.target.value}))} style={{marginBottom:16}}/><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>Category</p><div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>{GOAL_CATS.map(cat=><button key={cat} onClick={()=>setEditGoal(p=>({...p,cat}))} style={{padding:"8px 16px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:editGoal.cat===cat?"#AAFF00":"#2C2C2E",color:editGoal.cat===cat?"#000":"#8E8E93",fontWeight:editGoal.cat===cat?700:400}}>{cat}</button>)}</div><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>Target date</p><input type="date" value={editGoal.deadline||""} onChange={e=>setEditGoal(p=>({...p,deadline:e.target.value}))} style={{marginBottom:24}}/><button onClick={()=>{setGoals(p=>p.map(x=>x.id===editGoal.id?editGoal:x));setEditGoal(null);showToast("Goal updated!");}} style={{width:"100%",padding:"19px",borderRadius:18,background:"#AAFF00",color:"#000",border:"none",fontFamily:"inherit",fontWeight:800,fontSize:17,cursor:"pointer"}}>Save changes</button></div></div>}
-    {goals.filter(g=>g.done).length>0&&<><SH>Completed</SH>{goals.filter(g=>g.done).map(g=>(<div key={g.id} style={{...card,opacity:0.5}}><div style={{display:"flex",alignItems:"center",gap:12}}><button onClick={()=>toggleGoal(g.id)} style={{width:44,height:44,borderRadius:"50%",background:LIME,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:LIME_DK,fontSize:18,border:"none",cursor:"pointer"}} title="Mark incomplete"></button><p style={{margin:0,fontSize:14,textDecoration:"line-through",color:"#636366",flex:1}}>{g.title}</p><button onClick={()=>setGoals(p=>p.filter(x=>x.id!==g.id))} style={{width:36,height:36,borderRadius:"50%",background:"#E24B4A18",border:"none",cursor:"pointer",color:"#E24B4A",fontSize:13}}>✕</button></div></div>))}</>}
+    {goals.filter(g=>g.done).length>0&&<><SH>Completed</SH>{goals.filter(g=>g.done).map(g=>(<div key={g.id} style={{...card,opacity:0.5}}><div style={{display:"flex",alignItems:"center",gap:12}}><button onClick={()=>toggleGoal(g.id)} style={{width:44,height:44,borderRadius:"50%",background:LIME,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:LIME_DK,fontSize:18,border:"none",cursor:"pointer"}} title="Mark incomplete"><i className="ti ti-check" style={{fontSize:16}}/></button><p style={{margin:0,fontSize:14,textDecoration:"line-through",color:"#636366",flex:1}}>{g.title}</p><button onClick={()=>setGoals(p=>p.filter(x=>x.id!==g.id))} style={{width:36,height:36,borderRadius:"50%",background:"#E24B4A18",border:"none",cursor:"pointer",color:"#E24B4A",fontSize:13}}>✕</button></div></div>))}</>}
     </div>}
   </div>);
 });
@@ -636,8 +635,8 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
             <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</p>
             <div style={{display:"flex",gap:2,flexShrink:0,marginLeft:8}}>
-              <button onClick={e=>{e.stopPropagation();setSelPartner({...p});}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}>✎</button>
-              <button onClick={e=>{e.stopPropagation();setPartners(prev=>prev.filter(x=>x.id!==p.id));}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}></button>
+              <button onClick={e=>{e.stopPropagation();setSelPartner({...p});}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>
+              <button onClick={e=>{e.stopPropagation();setPartners(prev=>prev.filter(x=>x.id!==p.id));}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>
             </div>
           </div>
           <p style={{margin:0,fontSize:12,color:"#555"}}>{b.label} belt{p.gym?` · ${p.gym}`:""}</p>
@@ -650,13 +649,13 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
 
   if(libSec==="mobility")return(<div className="fade-in"><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}><button onClick={()=>setLibSec(null)} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff"}}>BJJ Warmup</h2><span style={{fontSize:13,color:"#555"}}>{mDone}/{mobility.length}</span></div>
     <button onClick={()=>setMobility(BJJ_MOBILITY.map(m=>({...m,done:false})))} style={{width:"100%",padding:"10px",border:"none",borderRadius:50,background:"#1C1C1E",cursor:"pointer",color:"#8E8E93",fontSize:13,marginBottom:16,fontFamily:"inherit"}}>Reset all</button>
-    {["Warm-up","Guard","Hips","Spine","Neck","Wrists","Ankles","Takedowns"].map(cat=>{const exs=mobility.filter(m=>m.cat===cat);if(!exs.length)return null;return(<div key={cat}><SH>{cat}</SH><div style={{background:"#1C1C1E",borderRadius:16,overflow:"hidden",marginBottom:10}}>{exs.map((ex,i)=>(<div key={ex.id}><div style={{display:"flex",alignItems:"center",padding:"14px 16px",gap:14,opacity:ex.done?0.5:1}}><button onClick={()=>setMobility(p=>p.map(m=>m.id===ex.id?{...m,done:!m.done}:m))} style={{width:36,height:36,borderRadius:"50%",border:`2px solid ${ex.done?LIME:"#3A3A3C"}`,background:ex.done?LIME:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:LIME_DK,fontSize:14,transition:"all 0.2s"}}>{ex.done&&""}</button><div style={{flex:1}}><p style={{margin:"0 0 2px",fontSize:14,fontWeight:500,color:"#fff",textDecoration:ex.done?"line-through":"none"}}>{ex.name}</p><p style={{margin:0,fontSize:12,color:"#555"}}>{ex.reps}</p></div></div>{i<exs.length-1&&<div style={{height:"0.5px",background:"#2A2A2C",margin:"0 16px"}}/>}</div>))}</div></div>);})}
+    {["Warm-up","Guard","Hips","Spine","Neck","Wrists","Ankles","Takedowns"].map(cat=>{const exs=mobility.filter(m=>m.cat===cat);if(!exs.length)return null;return(<div key={cat}><SH>{cat}</SH><div style={{background:"#1C1C1E",borderRadius:16,overflow:"hidden",marginBottom:10}}>{exs.map((ex,i)=>(<div key={ex.id}><div style={{display:"flex",alignItems:"center",padding:"14px 16px",gap:14,opacity:ex.done?0.5:1}}><button onClick={()=>setMobility(p=>p.map(m=>m.id===ex.id?{...m,done:!m.done}:m))} style={{width:36,height:36,borderRadius:"50%",border:`2px solid ${ex.done?LIME:"#3A3A3C"}`,background:ex.done?LIME:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:LIME_DK,fontSize:14,transition:"all 0.2s"}}>{ex.done&&<i className="ti ti-check" style={{fontSize:14}}/>}</button><div style={{flex:1}}><p style={{margin:"0 0 2px",fontSize:14,fontWeight:500,color:"#fff",textDecoration:ex.done?"line-through":"none"}}>{ex.name}</p><p style={{margin:0,fontSize:12,color:"#555"}}>{ex.reps}</p></div></div>{i<exs.length-1&&<div style={{height:"0.5px",background:"#2A2A2C",margin:"0 16px"}}/>}</div>))}</div></div>);})}
   </div>);
 
   if(libSec==="injuries")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Injury Tracker" right={<button onClick={onAddInjury} style={{padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Log injury</button>}/>
     {activeInjuries.length>0&&<><p style={{margin:"0 0 10px",fontSize:13,color:"#E24B4A",fontWeight:600}}>{activeInjuries.length} active {activeInjuries.length===1?"injury":"injuries"}</p>{activeInjuries.map(inj=>(<div key={inj.id} style={{...card,borderLeft:"3px solid #E24B4A50"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><p style={{margin:"0 0 2px",fontSize:15,fontWeight:600,color:"#fff"}}>{inj.area}</p><p style={{margin:"0 0 6px",fontSize:12,color:"#555"}}>{inj.date}{inj.mechanism?` · ${inj.mechanism}`:""}</p>{inj.notes&&<p style={{margin:0,fontSize:13,color:"#8E8E93"}}>{inj.notes}</p>}</div><div style={{display:"flex",gap:6}}>{["Active","Recovering","Healed"].map(s=><button key={s} onClick={()=>setInjuries(p=>p.map(x=>x.id===inj.id?{...x,status:s}:x))} style={{padding:"5px 10px",borderRadius:50,border:"none",cursor:"pointer",fontSize:11,fontFamily:"inherit",background:inj.status===s?(s==="Active"?"#E24B4A":s==="Recovering"?"#EF9F27":POS):"#2C2C2E",color:inj.status===s?"#fff":"#555",fontWeight:inj.status===s?600:400}}>{s}</button>)}</div></div></div>))}</>}
-    {injuries.filter(i=>i.status==="Healed").length>0&&<><SH>Healed</SH>{injuries.filter(i=>i.status==="Healed").map(inj=>(<div key={inj.id} style={{...card,opacity:0.5}}><p style={{margin:0,fontSize:14,color:"#fff"}}>{inj.area} <span style={{color:POS,fontSize:12}}> healed</span></p></div>))}</>}
-    {injuries.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:"0 0 4px",fontSize:28}}></p><p style={{margin:0,fontSize:15,color:"#555"}}>No injuries logged. Stay healthy!</p></div>}
+    {injuries.filter(i=>i.status==="Healed").length>0&&<><SH>Healed</SH>{injuries.filter(i=>i.status==="Healed").map(inj=>(<div key={inj.id} style={{...card,opacity:0.5}}><p style={{margin:0,fontSize:14,color:"#fff"}}>{inj.area} <span style={{color:POS,fontSize:12}}>healed</span></p></div>))}</>}
+    {injuries.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><i className="ti ti-heart" style={{fontSize:28,color:"#555",display:"block",marginBottom:4}}/><p style={{margin:0,fontSize:15,color:"#555"}}>No injuries logged. Stay healthy!</p></div>}
   </div>);
 
   const menu=[
@@ -848,19 +847,19 @@ export default function App(){
   const handleDeleteSession=useCallback((id)=>{
     const tId=uid();
     setSessions(prev=>{const s=prev.find(x=>x.id===id);if(!s)return prev;const timer=setTimeout(()=>{delete undoRef.current[id];setToasts(p=>p.filter(t=>t.id!==tId));},5000);undoRef.current[id]={s,timer};return prev.filter(x=>x.id!==id);});
-    setToasts(prev=>[...prev,{id:tId,msg:"Session deleted",action:{label:"Undo",fn:()=>{const p=undoRef.current[id];if(p){clearTimeout(p.timer);delete undoRef.current[id];setSessions(q=>[p.s,...q].sort((a,b)=>b.date.localeCompare(a.date)));showToast("Session restored ");}setToasts(q=>q.filter(t=>t.id!==tId));}}}]);
+    setToasts(prev=>[...prev,{id:tId,msg:"Session deleted",action:{label:"Undo",fn:()=>{const p=undoRef.current[id];if(p){clearTimeout(p.timer);delete undoRef.current[id];setSessions(q=>[p.s,...q].sort((a,b)=>b.date.localeCompare(a.date)));showToast("Session restored");}setToasts(q=>q.filter(t=>t.id!==tId));}}}]);
   },[showToast]);
 
   const addSession=useCallback(s=>{
     if(editSession){
       setSessions(p=>p.map(x=>x.id===editSession.id?{...s,id:editSession.id}:x));
       setEditSession(null);
-      showToast("Session updated ✓");
+      showToast("Session updated");
     }else{
       const ns={...s,id:uid()};
       setSessions(p=>[ns,...p]);
       setPostSessionDate(ns.date);
-      showToast(`Session saved  +${50+(ns.taps_given||0)*10} XP `);
+      showToast(`Session saved — +${50+(ns.taps_given||0)*10} XP`);
     }
     setModal(null);
   },[showToast,editSession]);
@@ -869,20 +868,20 @@ export default function App(){
     setSessions(p=>[s,...p]);
     setModal(null);
     setPostSessionDate(s.date);
-    showToast("Quick session saved  +50 XP ");
+    showToast("Quick session saved — +50 XP");
   },[showToast]);
 
   const savePostSession=useCallback(e=>{
     setJournal(p=>[{...e,id:Date.now()},...p]);
     setPostSessionDate(null);
-    showToast("Debrief saved ");
+    showToast("Debrief saved");
   },[showToast]);
 
-  const addJournal=useCallback(e=>{setJournal(p=>[{...e,id:uid()},...p]);setModal(null);setJournalInitDate(null);showToast("Journal entry saved ");},[showToast]);
+  const addJournal=useCallback(e=>{setJournal(p=>[{...e,id:uid()},...p]);setModal(null);setJournalInitDate(null);showToast("Journal entry saved");},[showToast]);
   const addGoal=useCallback(g=>{setGoals(p=>[{...g,id:uid(),done:false},...p]);setModal(null);showToast("Goal added");},[showToast]);
   const addPartner=useCallback(p=>{setPartners(prev=>[{...p,id:uid()},...prev]);setModal(null);showToast("Partner added");},[showToast]);
   const addInjury=useCallback(i=>{setInjuries(prev=>[{...i,id:uid()},...prev]);setModal(null);showToast("Injury logged");},[showToast]);
-  const saveComp=useCallback(c=>{if(editComp){setCompetitions(p=>p.map(x=>x.id===editComp.id?{...c,id:editComp.id}:x));showToast("Competition updated ");}else{setCompetitions(p=>[{...c,id:uid()},...p]);showToast("Competition saved ");}setEditComp(null);setModal(null);},[editComp,showToast]);
+  const saveComp=useCallback(c=>{if(editComp){setCompetitions(p=>p.map(x=>x.id===editComp.id?{...c,id:editComp.id}:x));showToast("Competition updated");}else{setCompetitions(p=>[{...c,id:uid()},...p]);showToast("Competition saved");}setEditComp(null);setModal(null);},[editComp,showToast]);
   const handleEditComp=useCallback(c=>{setEditComp(c);setModal("comp");},[]);
   const handleEditSession=useCallback(s=>{setEditSession(s);setModal("session");},[]);
   const handleTabClick=useCallback((id)=>{setTab(id);if(id!=="library")setLibSec(null);setSelSession(null);},[]);
@@ -941,7 +940,7 @@ export default function App(){
       {modal==="session"&&<SessionModal onClose={()=>{setModal(null);setEditSession(null);}} onSave={addSession} techniques={techniques} editItem={editSession}/>}
       {selSession&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setSelSession(null)}><div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",maxHeight:"85vh",overflowY:"auto",padding:"20px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{width:36,height:5,borderRadius:3,background:"#3A3A3C",margin:"0 auto 16px"}}/><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>Session details</h3><button onClick={()=>setSelSession(null)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#8E8E93",fontSize:18,flexShrink:0}}>×</button></div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.date}</span><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.type}</span><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.duration} min</span>{selSession.mood&&<span style={{padding:"6px 14px",borderRadius:50,background:MOOD_C[selSession.mood]+"20",fontSize:13,color:MOOD_C[selSession.mood],fontWeight:600}}>{selSession.mood}</span>}</div>{selSession.partner&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Partner</p><p style={{margin:0,fontSize:15,color:"#fff"}}>{selSession.partner}</p></div>}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#1D9E75"}}>{selSession.taps_given||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Subs landed</p></div><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selSession.taps_received||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Times tapped</p></div></div>{selSession.notes&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selSession.notes}</p></div>}{selSession.techniques?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Techniques</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{selSession.techniques.map(t=><span key={t} style={{padding:"4px 12px",borderRadius:50,background:"#2C2C2E",fontSize:12,color:"#fff"}}>{t}</span>)}</div></div>}{selSession.rounds?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Rounds</p>{selSession.rounds.map((r,i)=><div key={r.id} style={{background:"#2C2C2E",borderRadius:12,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between"}}><span style={{fontSize:13,color:"#fff"}}>Round {i+1}{r.partner?` · ${r.partner}`:""}</span><span style={{fontSize:12,fontWeight:600,color:r.result==="win"?"#1D9E75":r.result==="loss"?"#E24B4A":"#555"}}>{r.result}</span></div>)}</div>}<button onClick={()=>{handleDeleteSession(selSession.id);setSelSession(null);}} style={{width:"100%",padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14,marginTop:8}}>Delete session</button></div></div>}
       {modal==="journal"&&<JournalModal onClose={()=>{setModal(null);setJournalInitDate(null);}} onSave={addJournal} initialDate={journalInitDate}/>}
-      {modal==="profile"&&<ProfileModal profile={profile} setProfile={p=>{setProfile(p);setModal(null);showToast("Profile updated ");}} onClose={()=>setModal(null)}/>}
+      {modal==="profile"&&<ProfileModal profile={profile} setProfile={p=>{setProfile(p);setModal(null);showToast("Profile updated");}} onClose={()=>setModal(null)}/>}
       {modal==="comp"&&<CompetitionModal onClose={()=>{setModal(null);setEditComp(null);}} onSave={saveComp} editItem={editComp}/>}
       {modal==="goal"&&<GoalModal onClose={()=>setModal(null)} onSave={addGoal}/>}
       {modal==="partner"&&<PartnerModal onClose={()=>setModal(null)} onSave={addPartner}/>}
