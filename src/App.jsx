@@ -169,7 +169,7 @@ const BeltPicker=memo(function BeltPicker({value,onChange}){return(<div style={{
 
 const StripePicker=memo(function StripePicker({value,onChange}){return(<div style={{background:"#2C2C2E",borderRadius:16,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>{[0,1,2,3,4].map(n=>(<button key={n} onClick={()=>onChange(n)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,background:"none",border:"none",cursor:"pointer",padding:"4px 8px",minWidth:44,minHeight:44,justifyContent:"center"}}><div style={{width:38,height:38,borderRadius:"50%",background:value===n?LIME:"#3A3A3C",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"}}><span style={{fontSize:15,fontWeight:700,color:value===n?LIME_DK:"#636366",fontFamily:"inherit"}}>{n}</span></div><span style={{fontSize:10,color:value===n?"#fff":"#636366",fontFamily:"inherit"}}>{n===0?"None":n===1?"Stripe":"Stripes"}</span></button>))}</div>);});
 
-const SCard=memo(function SCard({s,onDelete}){
+const SCard=memo(function SCard({s,onDelete,onEdit}){
   const moodColor=MOOD_C[s.mood]||"#3A3A3C";
   return(<div className="tap" style={{...card,borderLeft:`3px solid ${moodColor}50`}}>
     <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
@@ -180,7 +180,10 @@ const SCard=memo(function SCard({s,onDelete}){
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
           <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{s.duration} min{s.partner?` · ${s.partner}`:""}</p>
-          {onDelete&&<button onClick={()=>onDelete(s.id)} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}></button>}
+          <div style={{display:"flex",gap:2,flexShrink:0}}>
+            {onEdit&&<button onClick={e=>{e.stopPropagation();onEdit(s);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}>✎</button>}
+            {onDelete&&<button onClick={e=>{e.stopPropagation();onDelete(s.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}></button>}
+          </div>
         </div>
         {s.notes&&<p style={{margin:"0 0 6px",fontSize:13,color:"#8E8E93",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.notes}</p>}
         <div style={{display:"flex",gap:12,alignItems:"center"}}>
@@ -404,17 +407,17 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
 });
 
 //  SESSIONS 
-const Sessions=memo(function Sessions({sessions,onDelete,onSelectSession}){
+const Sessions=memo(function Sessions({sessions,onDelete,onEdit,onSelectSession}){
   const [typeFilter,setTypeFilter]=useState("All");
   const [search,setSearch]=useState("");
-  
+
   const displayed=useMemo(()=>{const q=search.toLowerCase();return sessions.filter(s=>typeFilter==="All"||s.type===typeFilter).filter(s=>!q||(s.partner||"").toLowerCase().includes(q)||(s.notes||"").toLowerCase().includes(q));},[sessions,typeFilter,search]);
   return(<div className="fade-in">
     <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search partner or notes..." style={{marginBottom:10}}/>
     <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:6}}>{["All",...SESSION_TYPES].map(t=><Pill key={t} active={typeFilter===t} onClick={()=>setTypeFilter(t)} s={{fontSize:12,padding:"7px 14px",flexShrink:0}}>{t}</Pill>)}</div>
     <p style={{margin:"0 0 12px",fontSize:13,color:"#555"}}>{displayed.length} of {sessions.length} sessions</p>
     {displayed.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>{search||typeFilter!=="All"?"No sessions match your filter":"No sessions logged yet"}</p></div>}
-    {displayed.map(s=><div key={s.id} onClick={()=>onSelectSession(s)} style={{cursor:"pointer"}}><SCard s={s} onDelete={onDelete}/></div>)}
+    {displayed.map(s=><div key={s.id} onClick={()=>onSelectSession(s)} style={{cursor:"pointer"}}><SCard s={s} onDelete={onDelete} onEdit={onEdit}/></div>)}
   </div>);
 });
 
@@ -509,7 +512,6 @@ function AICoach({sessions,profile}){
 //  PROGRESS 
 const Progress=memo(function Progress({sessions,competitions,setCompetitions,goals,setGoals,journal,profile,onAddComp,onAddGoal,onEditComp,showToast}){
   const [sub,setSub]=useState("coach");
-  const [confirmDel,setConfirmDel]=useState(null);
   const [selComp,setSelComp]=useState(null);
   const [editGoal,setEditGoal]=useState(null);
   const totals=useMemo(()=>({given:sessions.reduce((a,s)=>a+(s.taps_given||0),0),received:sessions.reduce((a,s)=>a+(s.taps_received||0),0),mins:sessions.reduce((a,s)=>a+(s.duration||0),0)}),[sessions]);
@@ -537,8 +539,29 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}><button onClick={onAddComp} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add event</button></div>
       {competitions.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>No competitions logged yet</p></div>}
-      {competitions.map(comp=>{const medals=getMedals(comp);return(<div key={comp.id} style={{...card,cursor:"pointer",padding:"14px 16px"}} onClick={()=>setSelComp(comp)}><div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}}><p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingRight:10}}>{comp.event}</p><div style={{display:"flex",alignItems:"center",gap:5,flexShrink:0}}><span style={{fontSize:12,fontWeight:700,color:POS,background:POS+"18",padding:"3px 8px",borderRadius:6}}>{comp.wins}W</span><span style={{fontSize:12,fontWeight:700,color:"#E24B4A",background:"#E24B4A18",padding:"3px 8px",borderRadius:6}}>{comp.losses}L</span></div></div><p style={{margin:"0 0 8px",fontSize:11,color:"#555"}}>{comp.date}{comp.location?" · "+comp.location:""}</p>{medals.length>0&&<div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>{medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:3,background:"#2C2C2E",borderRadius:50,padding:"2px 8px 2px 5px"}}><div style={{width:10,height:10,borderRadius:"50%",background:MEDAL_COLORS[m.medal],flexShrink:0}}/><span style={{fontSize:10,color:"#8E8E93"}}>{m.label}</span></div>)}</div>}{confirmDel===comp.id?(<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderTop:"0.5px solid #2A2A2C"}}><span style={{fontSize:13,color:"#E24B4A",flex:1}}>Delete this event?</span><button onClick={e=>{e.stopPropagation();deleteComp(comp.id);}} style={{padding:"8px 16px",borderRadius:50,background:"#E24B4A",color:"#fff",border:"none",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>Delete</button><button onClick={e=>{e.stopPropagation();setConfirmDel(null);}} style={{padding:"8px 16px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>Cancel</button></div>
-      ):(<div style={{display:"flex",gap:8,borderTop:"0.5px solid #2A2A2C",paddingTop:10}}><button onClick={e=>{e.stopPropagation();onEditComp(comp);}} style={{flex:1,padding:"9px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>Edit</button><button onClick={e=>{e.stopPropagation();setConfirmDel(comp.id);}} style={{flex:1,padding:"9px",borderRadius:50,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>Delete</button></div>)}</div>);})}
+      {competitions.map(comp=>{const medals=getMedals(comp);return(<div key={comp.id} className="tap" style={card} onClick={()=>setSelComp(comp)}>
+        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+          <div style={{width:46,height:46,borderRadius:14,background:"#E24B4A18",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid #E24B4A20"}}>
+            <span style={{fontSize:10,fontWeight:700,color:"#E24B4A",lineHeight:1}}>{comp.date?.slice(5).replace("-","/")}</span>
+            <span style={{fontSize:9,color:"#E24B4A",opacity:0.7,marginTop:2}}>comp</span>
+          </div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+              <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{comp.event}</p>
+              <div style={{display:"flex",gap:2,flexShrink:0,marginLeft:8}}>
+                <button onClick={e=>{e.stopPropagation();onEditComp(comp);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}>✎</button>
+                <button onClick={e=>{e.stopPropagation();deleteComp(comp.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}></button>
+              </div>
+            </div>
+            <p style={{margin:"0 0 6px",fontSize:12,color:"#555"}}>{comp.date}{comp.location?" · "+comp.location:""}</p>
+            <div style={{display:"flex",gap:10,alignItems:"center"}}>
+              <span style={{fontSize:12,color:POS,fontWeight:600}}>{comp.wins||0}W</span>
+              <span style={{fontSize:12,color:"#E24B4A"}}>{comp.losses||0}L</span>
+              {medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:3}}><div style={{width:8,height:8,borderRadius:"50%",background:MEDAL_COLORS[m.medal],flexShrink:0}}/><span style={{fontSize:10,color:"#8E8E93"}}>{m.label}</span></div>)}
+            </div>
+          </div>
+        </div>
+      </div>);})}
     </div>}
     {selComp&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setSelComp(null)}><div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",maxHeight:"90vh",overflowY:"auto",padding:"20px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>{selComp.event}</h3><button onClick={()=>setSelComp(null)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:18}}>x</button></div>{selComp.photo&&<img src={selComp.photo} style={{width:"100%",borderRadius:14,maxHeight:220,objectFit:"cover",marginBottom:16}}/>}<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>{selComp.date&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.date}</span>}{selComp.location&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.location}</span>}{selComp.ageBracket&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.ageBracket}</span>}{selComp.compBelt&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.compBelt} Belt</span>}{selComp.weight&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.weight}</span>}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:POS}}>{selComp.wins||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Wins</p></div><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selComp.losses||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Losses</p></div></div>{selComp.joinedGi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giAbsMedal||"None"}</span></div></div></div></div>}{selComp.joinedNogi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>No-Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiAbsMedal||"None"}</span></div></div></div></div>}{selComp.notes&&<div style={{marginTop:12,marginBottom:16}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selComp.notes}</p></div>}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8}}><button onClick={()=>{onEditComp(selComp);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#2C2C2E",color:"#fff",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Edit</button><button onClick={()=>{deleteComp(selComp.id);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button></div></div></div>}
     {sub==="goals"&&<div>
@@ -606,7 +629,22 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
 
   if(libSec==="partners")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Training Partners" right={<button onClick={onAddPartner} style={{padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button>}/>
     {partners.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>No partners added yet</p></div>}
-    {partners.map(p=>{const b=BELTS.find(x=>x.id===p.belt)||BELTS[0];const pSess=sessions.filter(s=>s.partner&&s.partner.toLowerCase()===p.name.toLowerCase());const lastT=pSess.length>0?pSess[0].date:null;const avgSubs=pSess.length>0?Math.round(pSess.reduce((a,s)=>a+(s.taps_given||0),0)/pSess.length*10)/10:0;const avgTapped=pSess.length>0?Math.round(pSess.reduce((a,s)=>a+(s.taps_received||0),0)/pSess.length*10)/10:0;return(<div key={p.id} style={{...card,cursor:"pointer"}} className="tap" onClick={()=>setSelPartner({...p,_avgSubs:avgSubs,_avgTapped:avgTapped,_sessCount:pSess.length,_lastT:lastT})}><div style={{display:"flex",alignItems:"center",gap:12}}><div style={{width:46,height:46,borderRadius:"50%",background:b.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:16,fontWeight:700,color:b.text}}>{p.name.charAt(0)}</span></div><div style={{flex:1}}><p style={{margin:"0 0 2px",fontSize:15,fontWeight:500,color:"#fff"}}>{p.name}</p><p style={{margin:0,fontSize:12,color:"#555"}}>{b.label} belt{p.gym?` · ${p.gym}`:""}</p>{pSess.length>0&&<p style={{margin:"3px 0 0",fontSize:11,color:"#555"}}>{pSess.length} sessions · last {lastT}</p>}</div><span style={{color:"#444",fontSize:18}}>›</span></div></div>);})}
+    {partners.map(p=>{const b=BELTS.find(x=>x.id===p.belt)||BELTS[0];const pSess=sessions.filter(s=>s.partner&&s.partner.toLowerCase()===p.name.toLowerCase());const lastT=pSess.length>0?pSess[0].date:null;return(<div key={p.id} className="tap" style={card} onClick={()=>setSelPartner({...p})}>
+      <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div style={{width:46,height:46,borderRadius:"50%",background:b.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:16,fontWeight:700,color:b.text}}>{p.name.charAt(0)}</span></div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
+            <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</p>
+            <div style={{display:"flex",gap:2,flexShrink:0,marginLeft:8}}>
+              <button onClick={e=>{e.stopPropagation();setSelPartner({...p});}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}>✎</button>
+              <button onClick={e=>{e.stopPropagation();setPartners(prev=>prev.filter(x=>x.id!==p.id));}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}></button>
+            </div>
+          </div>
+          <p style={{margin:0,fontSize:12,color:"#555"}}>{b.label} belt{p.gym?` · ${p.gym}`:""}</p>
+          {pSess.length>0&&<p style={{margin:"3px 0 0",fontSize:11,color:"#555"}}>{pSess.length} sessions{lastT?" · last "+lastT:""}</p>}
+        </div>
+      </div>
+    </div>);})}
     {selPartner&&<PartnerDetailModal partner={selPartner} sessions={sessions} onClose={()=>setSelPartner(null)} onSave={(en)=>{setPartners(prev=>prev.map(x=>x.id===selPartner.id?{...x,...en}:x));setSelPartner(null);}} onDelete={()=>{setPartners(prev=>prev.filter(x=>x.id!==selPartner.id));setSelPartner(null);}}/>}
   </div>);
 
@@ -658,14 +696,14 @@ function PostSessionPrompt({onClose,onSave,sessionDate}){
   </BottomSheet>);
 }
 
-function SessionModal({onClose,onSave,techniques}){
-  const [f,setF]=useState({date:todayISO(),type:"Gi",duration:90,partner:"",taps_given:0,taps_received:0,notes:"",techniques:[],mood:"good",coachNotes:"",rounds:[]});
+function SessionModal({onClose,onSave,techniques,editItem}){
+  const [f,setF]=useState(editItem||{date:todayISO(),type:"Gi",duration:90,partner:"",taps_given:0,taps_received:0,notes:"",techniques:[],mood:"good",coachNotes:"",rounds:[]});
   const sv=useCallback((k,v)=>setF(p=>({...p,[k]:v})),[]);
   const toggle=useCallback(name=>setF(p=>({...p,techniques:p.techniques.includes(name)?p.techniques.filter(t=>t!==name):[...p.techniques,name]})),[]);
   const addRound=()=>setF(p=>({...p,rounds:[...p.rounds,{id:uid(),partner:"",result:"neutral",notes:""}]}));
   const updateRound=(id,k,v)=>setF(p=>({...p,rounds:p.rounds.map(r=>r.id===id?{...r,[k]:v}:r)}));
   const removeRound=id=>setF(p=>({...p,rounds:p.rounds.filter(r=>r.id!==id)}));
-  return(<BottomSheet onClose={onClose} title="Log session">
+  return(<BottomSheet onClose={onClose} title={editItem?"Edit session":"Log session"}>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><div><Lbl>Date</Lbl><input type="date" max={todayISO()} value={f.date} onChange={e=>sv("date",e.target.value)}/></div><div><Lbl>Type</Lbl><select value={f.type} onChange={e=>sv("type",e.target.value)}>{SESSION_TYPES.map(t=><option key={t}>{t}</option>)}</select></div></div>
     <div style={{marginBottom:12}}><Lbl>Duration — {f.duration} min</Lbl><input type="range" min={15} max={300} step={15} value={f.duration} onChange={e=>sv("duration",Number(e.target.value))}/></div>
     <div style={{marginBottom:14}}><Lbl>How did it feel?</Lbl><div style={{display:"flex",gap:8}}>{MOODS.map(m=><Pill key={m} active={f.mood===m} onClick={()=>sv("mood",m)} color={MOOD_C[m]} s={{flex:1,fontSize:12,padding:"9px 4px"}}>{m}</Pill>)}</div></div>
@@ -678,7 +716,7 @@ function SessionModal({onClose,onSave,techniques}){
     <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>{techniques.slice(0,20).map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0}}>{t.name}</Pill>)}</div>
     <div style={{marginBottom:12}}><Lbl>Coach notes</Lbl><input value={f.coachNotes} onChange={e=>sv("coachNotes",e.target.value)} placeholder="What did your coach tell you?"/></div>
     <Lbl>Session notes</Lbl><textarea value={f.notes} onChange={e=>sv("notes",e.target.value)} placeholder="What happened on the mat today?" style={{marginBottom:20}}/>
-    <PBtn onClick={()=>onSave(f)} glow>Save session</PBtn>
+    <PBtn onClick={()=>onSave(f)} glow>{editItem?"Update session":"Save session"}</PBtn>
   </BottomSheet>);
 }
 
@@ -771,6 +809,7 @@ export default function App(){
   const [toasts,setToasts]=useState([]);
   const [libSec,setLibSec]=useState(null);
   const [editComp,setEditComp]=useState(null);
+  const [editSession,setEditSession]=useState(null);
   const [journalInitDate,setJournalInitDate]=useState(null);
   const [loaded,setLoaded]=useState(false);
   const [user,setUser]=useState(null);
@@ -813,12 +852,18 @@ export default function App(){
   },[showToast]);
 
   const addSession=useCallback(s=>{
-    const ns={...s,id:uid()};
-    setSessions(p=>[ns,...p]);
+    if(editSession){
+      setSessions(p=>p.map(x=>x.id===editSession.id?{...s,id:editSession.id}:x));
+      setEditSession(null);
+      showToast("Session updated ✓");
+    }else{
+      const ns={...s,id:uid()};
+      setSessions(p=>[ns,...p]);
+      setPostSessionDate(ns.date);
+      showToast(`Session saved  +${50+(ns.taps_given||0)*10} XP `);
+    }
     setModal(null);
-    setPostSessionDate(ns.date);
-    showToast(`Session saved  +${50+(ns.taps_given||0)*10} XP `);
-  },[showToast]);
+  },[showToast,editSession]);
 
   const addQuickSession=useCallback(s=>{
     setSessions(p=>[s,...p]);
@@ -839,6 +884,7 @@ export default function App(){
   const addInjury=useCallback(i=>{setInjuries(prev=>[{...i,id:uid()},...prev]);setModal(null);showToast("Injury logged");},[showToast]);
   const saveComp=useCallback(c=>{if(editComp){setCompetitions(p=>p.map(x=>x.id===editComp.id?{...c,id:editComp.id}:x));showToast("Competition updated ");}else{setCompetitions(p=>[{...c,id:uid()},...p]);showToast("Competition saved ");}setEditComp(null);setModal(null);},[editComp,showToast]);
   const handleEditComp=useCallback(c=>{setEditComp(c);setModal("comp");},[]);
+  const handleEditSession=useCallback(s=>{setEditSession(s);setModal("session");},[]);
   const handleTabClick=useCallback((id)=>{setTab(id);if(id!=="library")setLibSec(null);setSelSession(null);},[]);
 
   if(authLoading||(user&&!loaded))return(<div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><img src={LOGO} alt="Grapplr" style={{width:"60%",maxWidth:200,objectFit:"contain",opacity:0.8}}/><p style={{color:"#555",fontSize:13,margin:0}}>Loading…</p></div>);
@@ -873,7 +919,7 @@ export default function App(){
       {/* Content */}
       <div style={{padding:"16px 20px 100px"}}>
         {tab==="dashboard"&&<Dashboard sessions={sessions} journal={journal} profile={profile} onLog={()=>setModal("session")} onQuickLog={()=>setModal("quicklog")} onJournal={()=>setModal("journal")}/>}
-        {tab==="sessions"&&<Sessions sessions={sessions} onDelete={handleDeleteSession} onSelectSession={setSelSession}/>}
+        {tab==="sessions"&&<Sessions sessions={sessions} onDelete={handleDeleteSession} onEdit={handleEditSession} onSelectSession={setSelSession}/>}
         {tab==="journal"&&<Journal journal={journal} onAdd={()=>setModal("journal")}/>}
         {tab==="progress"&&<Progress sessions={sessions} competitions={competitions} setCompetitions={setCompetitions} goals={goals} setGoals={setGoals} journal={journal} profile={profile} onAddComp={()=>{setEditComp(null);setModal("comp");}} onAddGoal={()=>setModal("goal")} onEditComp={handleEditComp} showToast={showToast}/>}
         {tab==="library"&&<Library techniques={techniques} setTechniques={setTechniques} partners={partners} setPartners={setPartners} injuries={injuries} setInjuries={setInjuries} sessions={sessions} onAddPartner={()=>setModal("partner")} onAddInjury={()=>setModal("injury")} libSec={libSec} setLibSec={setLibSec}/>}
@@ -892,7 +938,7 @@ export default function App(){
 
       {/* Modals */}
       {modal==="quicklog"&&<QuickLogModal onClose={()=>setModal(null)} onSave={addQuickSession}/>}
-      {modal==="session"&&<SessionModal onClose={()=>setModal(null)} onSave={addSession} techniques={techniques}/>}
+      {modal==="session"&&<SessionModal onClose={()=>{setModal(null);setEditSession(null);}} onSave={addSession} techniques={techniques} editItem={editSession}/>}
       {selSession&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setSelSession(null)}><div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",maxHeight:"85vh",overflowY:"auto",padding:"20px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{width:36,height:5,borderRadius:3,background:"#3A3A3C",margin:"0 auto 16px"}}/><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>Session details</h3><button onClick={()=>setSelSession(null)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#8E8E93",fontSize:18,flexShrink:0}}>×</button></div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.date}</span><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.type}</span><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.duration} min</span>{selSession.mood&&<span style={{padding:"6px 14px",borderRadius:50,background:MOOD_C[selSession.mood]+"20",fontSize:13,color:MOOD_C[selSession.mood],fontWeight:600}}>{selSession.mood}</span>}</div>{selSession.partner&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Partner</p><p style={{margin:0,fontSize:15,color:"#fff"}}>{selSession.partner}</p></div>}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#1D9E75"}}>{selSession.taps_given||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Subs landed</p></div><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selSession.taps_received||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Times tapped</p></div></div>{selSession.notes&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selSession.notes}</p></div>}{selSession.techniques?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Techniques</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{selSession.techniques.map(t=><span key={t} style={{padding:"4px 12px",borderRadius:50,background:"#2C2C2E",fontSize:12,color:"#fff"}}>{t}</span>)}</div></div>}{selSession.rounds?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Rounds</p>{selSession.rounds.map((r,i)=><div key={r.id} style={{background:"#2C2C2E",borderRadius:12,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between"}}><span style={{fontSize:13,color:"#fff"}}>Round {i+1}{r.partner?` · ${r.partner}`:""}</span><span style={{fontSize:12,fontWeight:600,color:r.result==="win"?"#1D9E75":r.result==="loss"?"#E24B4A":"#555"}}>{r.result}</span></div>)}</div>}<button onClick={()=>{handleDeleteSession(selSession.id);setSelSession(null);}} style={{width:"100%",padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14,marginTop:8}}>Delete session</button></div></div>}
       {modal==="journal"&&<JournalModal onClose={()=>{setModal(null);setJournalInitDate(null);}} onSave={addJournal} initialDate={journalInitDate}/>}
       {modal==="profile"&&<ProfileModal profile={profile} setProfile={p=>{setProfile(p);setModal(null);showToast("Profile updated ");}} onClose={()=>setModal(null)}/>}
