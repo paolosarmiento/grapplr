@@ -453,82 +453,12 @@ const Journal=memo(function Journal({journal,onAdd}){return(<div className="fade
   </div>))}
 </div>);});
 
-//  AI COACH 
-function AICoach({sessions,profile}){
-  const [insight,setInsight]=useState(null);
-  const [loading,setLoading]=useState(false);
-  const [apiKey,setApiKey]=useState(()=>localStorage.getItem("claude_key")||"");
-  const [showKeyInput,setShowKeyInput]=useState(false);
-
-  const ruleInsights=useMemo(()=>{
-    if(!sessions.length)return[];
-    const last20=sessions.slice(0,20);
-    const insights=[];
-    const totalSubs=last20.reduce((a,s)=>a+(s.taps_given||0),0);
-    const totalTapped=last20.reduce((a,s)=>a+(s.taps_received||0),0);
-    const subRate=last20.length>0?Math.round(totalSubs/last20.length*10)/10:0;
-    if(totalTapped>totalSubs*1.5)insights.push({title:"Defensive gaps detected",body:`You're being submitted ${totalTapped} times vs your ${totalSubs} submissions in your last ${last20.length} sessions. Your defense needs attention. Focus on positional escapes.`,priority:"high"});
-    if(subRate>=1)insights.push({title:"Submission machine",body:`You're averaging ${subRate} submissions per session. Elite efficiency. Keep hunting finishes — you're doing something right.`,priority:"good"});
-    const giCount=last20.filter(s=>s.type==="Gi").length;
-    const nogiCount=last20.filter(s=>s.type==="No-Gi").length;
-    if(giCount>0&&nogiCount===0)insights.push({title:"Try No-Gi",body:"You haven't trained No-Gi recently. Cross-training removes the gi grips and will expose weaknesses in your base game.",priority:"medium"});
-    if(nogiCount>0&&giCount===0)insights.push({title:"Get back in the gi",body:"Gi training builds patience, grips, and technical precision. Mix it in — the collar grips will tighten your whole game.",priority:"medium"});
-    const drillCount=last20.filter(s=>s.type==="Drilling").length;
-    if(drillCount===0)insights.push({title:"Add drilling sessions",body:"You haven't logged any drilling sessions recently. Deliberate drilling is how techniques become automatic under pressure.",priority:"medium"});
-    const streak=calcStreak(sessions);
-    if(streak>=7)insights.push({title:`${streak}-day streak!`,body:"Consistency is the single greatest predictor of improvement in BJJ. You're building something real right now.",priority:"good"});
-    if(profile.favPositions?.length>0)insights.push({title:`${profile.favPositions[0]} is your game`,body:`As a ${profile.gameStyle||"grappler"}, invest in your entries to ${profile.favPositions[0]}. Master the setups, not just the position itself.`,priority:"medium"});
-    return insights.slice(0,4);
-  },[sessions,profile]);
-
-  const getAICoaching=async()=>{
-    if(!apiKey.trim()){setShowKeyInput(true);return;}
-    setLoading(true);setInsight(null);
-    const last10=sessions.slice(0,10);
-    const summary={name:profile.name,belt:profile.belt,gameStyle:profile.gameStyle,favPositions:profile.favPositions,totalSessions:sessions.length,last10Sessions:last10.map(s=>({date:s.date,type:s.type,duration:s.duration,subsGiven:s.taps_given||0,subsTaken:s.taps_received||0,mood:s.mood,notes:s.notes}))};
-    try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:500,messages:[{role:"user",content:`You are an elite BJJ coach analyzing a student's training data. Be direct, specific, and actionable. No fluff. Student: ${JSON.stringify(summary)}. Give 3 specific, personalized coaching insights in 2-3 sentences each. Focus on their actual patterns, not generic advice. Format as plain text with each insight starting with an emoji.`}]})});
-      const data=await res.json();
-      if(data.content?.[0]?.text)setInsight(data.content[0].text);
-      else setInsight("Unable to get AI coaching right now. Check your API key.");
-    }catch(e){setInsight("Connection error. Make sure your Claude API key is correct.");}
-    setLoading(false);
-  };
-
-  return(<div className="fade-in">
-    {/* Rule-based insights */}
-    {ruleInsights.length>0&&<div style={{marginBottom:20}}>
-      <SH>Your coaching report</SH>
-      {ruleInsights.map((ins,i)=>(<div key={i} style={{...card,borderLeft:`3px solid ${ins.priority==="high"?"#E24B4A":ins.priority==="good"?POS:LIME}`}}>
-        <p style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:"#fff"}}>{ins.title}</p>
-        <p style={{margin:0,fontSize:13,color:"#8E8E93",lineHeight:1.65}}>{ins.body}</p>
-      </div>))}
-    </div>}
-
-    {sessions.length===0&&<div style={{textAlign:"center",padding:"48px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:20}}>
-      <i className="ti ti-chart-bar" style={{fontSize:36,color:"#555",display:"block",marginBottom:8}}/>
-      <p style={{margin:"0 0 4px",fontSize:15,color:"#fff",fontWeight:600}}>No data yet</p>
-      <p style={{margin:0,fontSize:13,color:"#555"}}>Log 3+ sessions to unlock your coaching report</p>
-    </div>}
-
-    {/* AI Upgrade */}
-    <div style={{background:"#1C1C1E",borderRadius:20,padding:"18px",border:`0.5px solid ${LIME}30`,marginTop:8}}>
-      <p style={{margin:"0 0 4px",fontSize:11,fontWeight:700,color:LIME,textTransform:"uppercase",letterSpacing:"0.8px"}}>AI Coach powered by Claude</p>
-      <p style={{margin:"0 0 12px",fontSize:15,fontWeight:700,color:"#fff"}}>Get personalized coaching</p>
-      <p style={{margin:"0 0 14px",fontSize:13,color:"#8E8E93",lineHeight:1.6}}>Claude AI analyzes your training patterns and gives you specific, personalized advice — like having a coach review your training diary.</p>
-      {showKeyInput&&<div style={{marginBottom:12}}><Lbl>Your Claude API key</Lbl><input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-ant-..." style={{marginBottom:8}}/><button onClick={()=>{localStorage.setItem("claude_key",apiKey);setShowKeyInput(false);}} style={{width:"100%",padding:"10px",borderRadius:12,background:"#2C2C2E",border:"none",cursor:"pointer",color:"#fff",fontFamily:"inherit",fontSize:13}}>Save key</button><p style={{margin:"8px 0 0",fontSize:11,color:"#555"}}>Your key is stored locally only. Get one free at console.anthropic.com</p></div>}
-      {insight&&<div style={{background:"#0D1F0D",borderRadius:12,padding:"14px",marginBottom:12,border:`0.5px solid ${LIME}20`}}><p style={{margin:0,fontSize:13,color:"#ccc",lineHeight:1.7,whiteSpace:"pre-line"}}>{insight}</p></div>}
-      <PBtn onClick={getAICoaching} s={{fontSize:15,padding:"15px"}} glow>{loading?"Analyzing your training…":"Get AI Coaching →"}</PBtn>
-    </div>
-  </div>);
-}
-
-//  PROGRESS 
+//  PROGRESS
 const Progress=memo(function Progress({sessions,competitions,setCompetitions,goals,setGoals,journal,profile,onAddComp,onAddGoal,onEditComp,showToast}){
-  const [sub,setSub]=useState("coach");
+  const [sub,setSub]=useState("stats");
   const [selComp,setSelComp]=useState(null);
   const [editGoal,setEditGoal]=useState(null);
-  useEffect(()=>{document.body.style.overflow=(selComp||editGoal)?"hidden":"";return()=>{document.body.style.overflow="";};},[selComp,editGoal]);
+  useEffect(()=>{document.body.style.overflow=editGoal?"hidden":"";return()=>{document.body.style.overflow="";};},[editGoal]);
   const totals=useMemo(()=>({given:sessions.reduce((a,s)=>a+(s.taps_given||0),0),received:sessions.reduce((a,s)=>a+(s.taps_received||0),0),mins:sessions.reduce((a,s)=>a+(s.duration||0),0)}),[sessions]);
   const weeklyData=useMemo(()=>{const now=Date.now();return[...Array(6)].map((_,i)=>{const start=new Date(now-(5-i)*7*864e5),end=new Date(now-(4-i)*7*864e5);const mins=sessions.filter(s=>{const d=new Date(s.date);return d>=start&&d<end;}).reduce((a,s)=>a+(s.duration||0),0);return{week:`${start.getMonth()+1}/${start.getDate()}`,hours:Math.round(mins/60*10)/10};});},[sessions]);
   const compStats=useMemo(()=>{const w=competitions.reduce((a,c)=>a+(c.wins||0),0),l=competitions.reduce((a,c)=>a+(c.losses||0),0);return{wins:w,losses:l,rate:w+l>0?Math.round(w/(w+l)*100):0};},[competitions]);
@@ -536,9 +466,27 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
   const toggleGoal=useCallback(id=>{setGoals(p=>{const g=p.find(x=>x.id===id);if(!g)return p;const done=!g.done;if(done)showToast("Goal achieved! Keep pushing.");else showToast("Goal re-opened.");return p.map(x=>x.id===id?{...x,done}:x);});},[setGoals,showToast]);
   const deleteComp=id=>{setCompetitions(p=>p.filter(x=>x.id!==id));showToast("Competition removed");};
 
+  // Full-page comp detail view
+  if(selComp){const medals=getMedals(selComp);return(<div className="fade-in">
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><button onClick={()=>setSelComp(null)} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selComp.event}</h2></div>
+    {selComp.photo&&<img src={selComp.photo} style={{width:"100%",borderRadius:14,maxHeight:220,objectFit:"cover",marginBottom:16}}/>}
+    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>{selComp.date&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.date}</span>}{selComp.location&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.location}</span>}{selComp.ageBracket&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.ageBracket}</span>}{selComp.compBelt&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.compBelt} Belt</span>}{selComp.weight&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.weight}</span>}</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+      <div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:POS}}>{selComp.wins||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Wins</p></div>
+      <div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selComp.losses||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Losses</p></div>
+    </div>
+    {selComp.joinedGi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giAbsMedal||"None"}</span></div></div></div></div>}
+    {selComp.joinedNogi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>No-Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiAbsMedal||"None"}</span></div></div></div></div>}
+    {medals.length>0&&<div style={{...card,marginBottom:0}}><SH>Medals</SH><div style={{display:"flex",gap:12,flexWrap:"wrap"}}>{medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:12,height:12,borderRadius:"50%",background:MEDAL_COLORS[m.medal]}}/><span style={{fontSize:13,color:"#fff"}}>{m.label}: {m.medal}</span></div>)}</div></div>}
+    {selComp.notes&&<div style={{...card}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selComp.notes}</p></div>}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8,marginBottom:20}}>
+      <button onClick={()=>{onEditComp(selComp);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#2C2C2E",color:"#fff",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Edit</button>
+      <button onClick={()=>{deleteComp(selComp.id);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button>
+    </div>
+  </div>);}
+
   return(<div className="fade-in">
-    <SegCtrl opts={[["coach","Coach"],["stats","Stats"],["comp","Comp"],["goals","Goals"]]} value={sub} onChange={setSub}/>
-    {sub==="coach"&&<AICoach sessions={sessions} profile={profile}/>}
+    <SegCtrl opts={[["stats","Stats"],["comp","Comp"],["goals","Goals"]]} value={sub} onChange={setSub}/>
     {sub==="stats"&&<div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
         {[{l:"Subs landed",v:totals.given,c:POS},{l:"Times tapped",v:totals.received,c:"#E24B4A"},{l:"Mat hours",v:Math.floor(totals.mins/60),c:"#fff"}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:26,fontWeight:800,color:m.c}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>))}
@@ -578,7 +526,6 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
         </div>
       </div>);})}
     </div>}
-    {selComp&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setSelComp(null)}><div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",maxHeight:"90dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"20px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>{selComp.event}</h3><button onClick={()=>setSelComp(null)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:18}}>x</button></div>{selComp.photo&&<img src={selComp.photo} style={{width:"100%",borderRadius:14,maxHeight:220,objectFit:"cover",marginBottom:16}}/>}<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>{selComp.date&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.date}</span>}{selComp.location&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.location}</span>}{selComp.ageBracket&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.ageBracket}</span>}{selComp.compBelt&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.compBelt} Belt</span>}{selComp.weight&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.weight}</span>}</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:POS}}>{selComp.wins||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Wins</p></div><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selComp.losses||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Losses</p></div></div>{selComp.joinedGi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giAbsMedal||"None"}</span></div></div></div></div>}{selComp.joinedNogi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>No-Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiAbsMedal||"None"}</span></div></div></div></div>}{selComp.notes&&<div style={{marginTop:12,marginBottom:16}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selComp.notes}</p></div>}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8}}><button onClick={()=>{onEditComp(selComp);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#2C2C2E",color:"#fff",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Edit</button><button onClick={()=>{deleteComp(selComp.id);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button></div></div></div>}
     {sub==="goals"&&<div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><p style={{margin:0,fontSize:13,color:"#555"}}>{goals.filter(g=>!g.done).length} active</p><button onClick={onAddGoal} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add goal</button></div>
       {goals.filter(g=>!g.done).length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}><p style={{margin:0,fontSize:15,color:"#555"}}>No active goals. Set one to stay focused.</p></div>}
