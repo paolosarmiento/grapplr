@@ -540,18 +540,23 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
 //  LIBRARY
 const LibBackBtn=({label,right,onBack})=>(<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><button onClick={onBack} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff"}}>{label}</h2>{right}</div>);
 
-function Library({techniques,setTechniques,partners,setPartners,injuries,setInjuries,sessions=[],onAddPartner,onAddInjury,libSec,setLibSec}){
+function Library({techniques,setTechniques,partners,setPartners,injuries,setInjuries,sessions=[],onAddPartner,onAddInjury,libSec,setLibSec,warmups,setWarmups}){
   const [techCat,setTechCat]=useState("All");
-  const [mobility,setMobility]=useState(()=>BJJ_MOBILITY.map(m=>({...m,done:false})));
   const [showSkillDefs,setShowSkillDefs]=useState(false);
   const [addOpen,setAddOpen]=useState(false);
   const [addName,setAddName]=useState("");
   const [addCat,setAddCat]=useState("Submissions");
+  const [warmupCat,setWarmupCat]=useState("All");
+  const [addWarmupOpen,setAddWarmupOpen]=useState(false);
+  const [addWarmupName,setAddWarmupName]=useState("");
+  const [addWarmupReps,setAddWarmupReps]=useState("");
+  const [addWarmupCat,setAddWarmupCat]=useState("Warm-up");
   const [selPartner,setSelPartner]=useState(null);
   const [editPartnerData,setEditPartnerData]=useState(null);
   const cats=useMemo(()=>["All",...new Set(techniques.map(t=>t.cat))],[techniques]);
   const filtered=useMemo(()=>techCat==="All"?techniques:techniques.filter(t=>t.cat===techCat),[techniques,techCat]);
-  const mDone=useMemo(()=>mobility.filter(m=>m.done).length,[mobility]);
+  const warmupCats=useMemo(()=>["All",...new Set(warmups.map(w=>w.cat))],[warmups]);
+  const filteredWarmups=useMemo(()=>warmupCat==="All"?warmups:warmups.filter(w=>w.cat===warmupCat),[warmups,warmupCat]);
   const activeInjuries=injuries.filter(i=>i.status!=="Healed");
   const upSkill=useCallback(id=>setTechniques(p=>p.map(x=>x.id===id?{...x,skill:Math.min(5,(x.skill||1)+1)}:x)),[setTechniques]);
   const downSkill=useCallback(id=>setTechniques(p=>p.map(x=>x.id===id?{...x,skill:Math.max(1,(x.skill||1)-1)}:x)),[setTechniques]);
@@ -617,9 +622,12 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
     </div>);})}
   </div>);
 
-  if(libSec==="mobility")return(<div className="fade-in"><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}><button onClick={()=>setLibSec(null)} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff"}}>BJJ Warmup</h2><span style={{fontSize:13,color:"#555"}}>{mDone}/{mobility.length}</span></div>
-    <button onClick={()=>setMobility(BJJ_MOBILITY.map(m=>({...m,done:false})))} style={{width:"100%",padding:"10px",border:"none",borderRadius:50,background:"#1C1C1E",cursor:"pointer",color:"#8E8E93",fontSize:13,marginBottom:16,fontFamily:"inherit"}}>Reset all</button>
-    {["Warm-up","Guard","Hips","Spine","Neck","Wrists","Ankles","Takedowns"].map(cat=>{const exs=mobility.filter(m=>m.cat===cat);if(!exs.length)return null;return(<div key={cat}><SH>{cat}</SH><div style={{background:"#1C1C1E",borderRadius:16,overflow:"hidden",marginBottom:10}}>{exs.map((ex,i)=>(<div key={ex.id}><div style={{display:"flex",alignItems:"center",padding:"14px 16px",gap:14,opacity:ex.done?0.5:1}}><button onClick={()=>setMobility(p=>p.map(m=>m.id===ex.id?{...m,done:!m.done}:m))} style={{width:36,height:36,borderRadius:"50%",border:`2px solid ${ex.done?LIME:"#3A3A3C"}`,background:ex.done?LIME:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:LIME_DK,fontSize:14,transition:"all 0.2s"}}>{ex.done&&<i className="ti ti-check" style={{fontSize:14}}/>}</button><div style={{flex:1}}><p style={{margin:"0 0 2px",fontSize:14,fontWeight:500,color:"#fff",textDecoration:ex.done?"line-through":"none"}}>{ex.name}</p><p style={{margin:0,fontSize:12,color:"#555"}}>{ex.reps}</p></div></div>{i<exs.length-1&&<div style={{height:"0.5px",background:"#2A2A2C",margin:"0 16px"}}/>}</div>))}</div></div>);})}
+  if(libSec==="mobility")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="BJJ Warmup"/>
+    <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:14}}>{warmupCats.map(c=><Pill key={c} active={warmupCat===c} onClick={()=>setWarmupCat(c)} s={{flexShrink:0}}>{c}</Pill>)}</div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}><p style={{margin:0,fontSize:13,color:"#555"}}>{filteredWarmups.length} exercises</p><button onClick={()=>setAddWarmupOpen(true)} style={{padding:"6px 14px",borderRadius:50,background:"#AAFF00",color:"#000",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button></div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>{filteredWarmups.map(w=>(<div key={w.id} style={{...card,position:"relative"}}><button onClick={()=>setWarmups(p=>p.filter(x=>x.id!==w.id))} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:"50%",border:"none",background:"#E24B4A18",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",color:"#E24B4A"}}>✕</button><p style={{margin:"0 0 2px",fontSize:13,fontWeight:500,color:"#fff",paddingRight:32}}>{w.name}</p><p style={{margin:"0 0 6px",fontSize:11,color:"#555"}}>{w.cat}</p>{w.reps&&<p style={{margin:0,fontSize:12,color:"#8E8E93"}}>{w.reps}</p>}</div>))}</div>
+    {filteredWarmups.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>No exercises in this category</p></div>}
+    {addWarmupOpen&&<BottomSheet onClose={()=>setAddWarmupOpen(false)} title="Add warmup exercise"><div style={{marginBottom:12}}><Lbl>Exercise name <span style={{color:"#E24B4A"}}>*</span></Lbl><input value={addWarmupName} onChange={e=>setAddWarmupName(e.target.value)} placeholder="e.g. Hip Escape" autoFocus/></div><div style={{marginBottom:12}}><Lbl>Sets / Reps</Lbl><input value={addWarmupReps} onChange={e=>setAddWarmupReps(e.target.value)} placeholder="e.g. 3 × 10 reps"/></div><div style={{marginBottom:20}}><Lbl>Category</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{["Warm-up","Hips","Spine","Neck","Wrists","Ankles","Takedowns","Guard","Other"].map(x=><Pill key={x} active={addWarmupCat===x} onClick={()=>setAddWarmupCat(x)} s={{fontSize:12}}>{x}</Pill>)}</div></div><PBtn onClick={()=>{if(addWarmupName.trim()){setWarmups(p=>[...p,{id:Date.now(),name:addWarmupName.trim(),reps:addWarmupReps.trim(),cat:addWarmupCat}]);setAddWarmupName("");setAddWarmupReps("");setAddWarmupOpen(false);}}} disabled={!addWarmupName.trim()}>Add exercise</PBtn></BottomSheet>}
   </div>);
 
   if(libSec==="injuries")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Injury Tracker" right={<button onClick={onAddInjury} style={{padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Log injury</button>}/>
@@ -631,7 +639,7 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
   const menu=[
     {id:"techniques",label:"Technique Library",sub:`${techniques.length} techniques`,icon:"ti-list-check",color:LIME},
     {id:"partners",label:"Training Partners",sub:`${partners.length} partners`,icon:"ti-users",color:POS},
-    {id:"mobility",label:"BJJ Warmup",sub:`${BJJ_MOBILITY.length} exercises · ${mDone} done`,icon:"ti-run",color:"#7F77DD"},
+    {id:"mobility",label:"BJJ Warmup",sub:`${warmups.length} exercises`,icon:"ti-run",color:"#7F77DD"},
     {id:"injuries",label:"Injury Tracker",sub:activeInjuries.length>0?`${activeInjuries.length} active injuries`:"Track and manage injuries",icon:"ti-first-aid-kit",color:"#E24B4A"},
   ];
   return(<div className="fade-in"><div style={{background:"#1C1C1E",borderRadius:20,overflow:"hidden",border:"0.5px solid #2A2A2C"}}>{menu.map((item,i)=>(<div key={item.id}><button onClick={()=>setLibSec(item.id)} className="tap" style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"18px 16px",border:"none",background:"transparent",cursor:"pointer",textAlign:"left",fontFamily:"inherit",minHeight:76}}><div style={{width:46,height:46,borderRadius:14,background:item.color+"18",border:`1px solid ${item.color}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><i className={`ti ${item.icon}`} style={{fontSize:22,color:item.color}}/></div><div style={{flex:1}}><p style={{margin:"0 0 2px",fontSize:15,fontWeight:600,color:"#fff"}}>{item.label}</p><p style={{margin:0,fontSize:12,color:"#555"}}>{item.sub}</p></div><span style={{color:"#444",fontSize:18}}>›</span></button>{i<menu.length-1&&<div style={{height:"0.5px",background:"#2A2A2C",margin:"0 16px"}}/>}</div>))}</div></div>);
@@ -767,6 +775,7 @@ export default function App(){
   const [tab,setTab]=useState("dashboard");
   const [sessions,setSessions]=useState([]);
   const [techniques,setTechniques]=useState(TECH_DEFAULT);
+  const [warmups,setWarmups]=useState(BJJ_MOBILITY);
   const [journal,setJournal]=useState([]);
   const [competitions,setCompetitions]=useState([]);
   const [goals,setGoals]=useState([]);
@@ -792,11 +801,11 @@ export default function App(){
     if(!user)return;
     (async()=>{
       try{
-        const keys=['sessions','techniques','journal','competitions','goals','partners','profile','injuries'];
+        const keys=['sessions','techniques','journal','competitions','goals','partners','profile','injuries','warmups'];
         const results=await Promise.allSettled(keys.map(k=>getDoc(doc(db,'users',user.uid,'data',k))));
-        const[s,t,j,c,g,p,pr,inj]=results.map(r=>r.value?.exists()?JSON.parse(r.value.data().value):null);
+        const[s,t,j,c,g,p,pr,inj,wu]=results.map(r=>r.value?.exists()?JSON.parse(r.value.data().value):null);
         if(s)setSessions(s);if(t)setTechniques(t);if(j)setJournal(j);
-        if(c)setCompetitions(c);if(g)setGoals(g);if(p)setPartners(p);if(pr)setProfile(pr);if(inj)setInjuries(inj);
+        if(c)setCompetitions(c);if(g)setGoals(g);if(p)setPartners(p);if(pr)setProfile(pr);if(inj)setInjuries(inj);if(wu)setWarmups(wu);
       }catch(e){console.error('Load error:',e);}
       setLoaded(true);
     })();
@@ -810,6 +819,7 @@ export default function App(){
   useFirestore(user?.uid,"bjj:partners",partners,loaded);
   useFirestore(user?.uid,"bjj:profile",profile,loaded);
   useFirestore(user?.uid,"bjj:injuries",injuries,loaded);
+  useFirestore(user?.uid,"bjj:warmups",warmups,loaded);
 
   // Lock body scroll whenever any modal/overlay is open
   useEffect(()=>{
@@ -898,7 +908,7 @@ export default function App(){
         {tab==="sessions"&&<Sessions sessions={sessions} onDelete={handleDeleteSession} onEdit={handleEditSession} onSelectSession={setSelSession}/>}
         {tab==="journal"&&<Journal journal={journal} onAdd={()=>setModal("journal")}/>}
         {tab==="progress"&&<Progress sessions={sessions} competitions={competitions} setCompetitions={setCompetitions} goals={goals} setGoals={setGoals} journal={journal} profile={profile} onAddComp={()=>{setEditComp(null);setModal("comp");}} onAddGoal={()=>setModal("goal")} onEditComp={handleEditComp} showToast={showToast}/>}
-        {tab==="library"&&<Library techniques={techniques} setTechniques={setTechniques} partners={partners} setPartners={setPartners} injuries={injuries} setInjuries={setInjuries} sessions={sessions} onAddPartner={()=>setModal("partner")} onAddInjury={()=>setModal("injury")} libSec={libSec} setLibSec={setLibSec}/>}
+        {tab==="library"&&<Library techniques={techniques} setTechniques={setTechniques} partners={partners} setPartners={setPartners} injuries={injuries} setInjuries={setInjuries} sessions={sessions} onAddPartner={()=>setModal("partner")} onAddInjury={()=>setModal("injury")} libSec={libSec} setLibSec={setLibSec} warmups={warmups} setWarmups={setWarmups}/>}
       </div>
 
       <ToastBar toasts={toasts} dismiss={dismissToast}/>
