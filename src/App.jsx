@@ -588,31 +588,39 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
     </div>}
     {/* Technique cards */}
     <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
-      {filtered.map(t=>{const beltIds=["white","blue","purple","brown","black"];const tb=BELTS.find(b=>b.id===(t.belt||"white"))||BELTS[0];const cycleBelt=()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,belt:beltIds[(beltIds.indexOf(x.belt||"white")+1)%5]}:x));return(
-        <div key={t.id} style={{...card,marginBottom:0}}>
-          <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-                <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{t.name}</p>
-                <button onClick={cycleBelt} className="tap" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 10px",borderRadius:50,background:tb.color+"22",border:`1px solid ${tb.color}40`,cursor:"pointer",fontFamily:"inherit"}}>
-                  <span style={{width:6,height:6,borderRadius:"50%",background:tb.color,flexShrink:0,boxShadow:`0 0 5px ${tb.color}80`}}/>
-                  <span style={{fontSize:10,color:"#fff",fontWeight:600}}>{tb.label}</span>
+      {filtered.map(t=>{
+        const beltIds=["white","blue","purple","brown","black"];
+        const curIdx=beltIds.indexOf(t.belt||"white");
+        return(
+          <div key={t.id} style={{...card,marginBottom:0}}>
+            <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{margin:"0 0 6px",fontSize:15,fontWeight:600,color:"#fff"}}>{t.name}</p>
+                <span style={{fontSize:11,padding:"2px 10px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93"}}>{t.cat}</span>
+                {t.notes&&<p style={{margin:"8px 0 0",fontSize:13,color:"#8E8E93",lineHeight:1.5}}>{t.notes}</p>}
+                {/* Belt progression dots */}
+                <div style={{display:"flex",alignItems:"center",gap:7,marginTop:12}}>
+                  {beltIds.map((bid,idx)=>{
+                    const b=BELTS.find(x=>x.id===bid)||BELTS[0];
+                    const isActive=idx===curIdx;
+                    const isFilled=idx<=curIdx;
+                    return(<button key={bid} onClick={()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,belt:bid}:x))} className="tap" style={{width:isActive?16:11,height:isActive?16:11,borderRadius:"50%",border:"none",padding:0,cursor:"pointer",flexShrink:0,background:isFilled?b.color:"#3A3A3C",outline:isActive?`2px solid ${LIME}`:"2px solid transparent",outlineOffset:2,transition:"all 0.18s"}}/>);
+                  })}
+                  <span style={{fontSize:11,color:"#555",marginLeft:2}}>{BELTS.find(b=>b.id===(t.belt||"white"))?.label}</span>
+                </div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
+                <button onClick={()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,favorite:!x.favorite}:x))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:t.favorite?"#EF9F27":"#555"}}>
+                  <i className={t.favorite?"ti ti-star-filled":"ti ti-star"} style={{fontSize:18}}/>
+                </button>
+                <button onClick={()=>setTechniques(p=>p.filter(y=>y.id!==t.id))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#555"}}>
+                  <i className="ti ti-trash" style={{fontSize:14}}/>
                 </button>
               </div>
-              <span style={{fontSize:11,padding:"2px 10px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93"}}>{t.cat}</span>
-              {t.notes&&<p style={{margin:"8px 0 0",fontSize:13,color:"#8E8E93",lineHeight:1.5}}>{t.notes}</p>}
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
-              <button onClick={()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,favorite:!x.favorite}:x))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:t.favorite?"#EF9F27":"#555"}}>
-                <i className={t.favorite?"ti ti-star-filled":"ti ti-star"} style={{fontSize:18}}/>
-              </button>
-              <button onClick={()=>setTechniques(p=>p.filter(y=>y.id!==t.id))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#555"}}>
-                <i className="ti ti-trash" style={{fontSize:14}}/>
-              </button>
             </div>
           </div>
-        </div>
-      );})}
+        );
+      })}
     </div>
     {/* Add technique sheet */}
     {addOpen&&<BottomSheet onClose={()=>{setAddOpen(false);setAddName("");setAddNotes("");setAddBelt("white");}} title="Add technique">
