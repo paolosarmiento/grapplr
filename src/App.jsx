@@ -468,6 +468,12 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
   const pbs=useMemo(()=>calcPersonalBests(sessions),[sessions]);
   const toggleGoal=useCallback(id=>{setGoals(p=>{const g=p.find(x=>x.id===id);if(!g)return p;const done=!g.done;if(done)showToast("Goal achieved! Keep pushing.");else showToast("Goal re-opened.");return p.map(x=>x.id===id?{...x,done}:x);});},[setGoals,showToast]);
   const deleteComp=id=>{setCompetitions(p=>p.filter(x=>x.id!==id));showToast("Competition removed");};
+  const [showWIForm,setShowWIForm]=useState(false);
+  const [wiDate,setWiDate]=useState(todayISO());
+  const [wiWeight,setWiWeight]=useState("");
+  useEffect(()=>{setShowWIForm(false);setWiDate(todayISO());setWiWeight("");},[selComp?.id]);
+  const addWeighIn=()=>{if(!wiWeight)return;const entry={id:Date.now(),date:wiDate,weight:parseFloat(wiWeight)};const updated={...selComp,weighIns:[...(selComp.weighIns||[]),entry].sort((a,b)=>b.date.localeCompare(a.date))};setCompetitions(p=>p.map(x=>x.id===selComp.id?updated:x));setSelComp(updated);setWiWeight("");setShowWIForm(false);};
+  const deleteWeighIn=wiId=>{const updated={...selComp,weighIns:(selComp.weighIns||[]).filter(w=>w.id!==wiId)};setCompetitions(p=>p.map(x=>x.id===selComp.id?updated:x));setSelComp(updated);};
   const weeklySubsData=useMemo(()=>{const now=Date.now();return[...Array(8)].map((_,i)=>{const start=new Date(now-(7-i)*7*864e5),end=new Date(now-(6-i)*7*864e5);const wk=sessions.filter(s=>{const d=new Date(s.date);return d>=start&&d<end;});return{week:`${start.getMonth()+1}/${start.getDate()}`,subs:wk.reduce((a,s)=>a+(s.taps_given||0),0),tapped:wk.reduce((a,s)=>a+(s.taps_received||0),0)};});},[sessions]);
   const heatmap=useMemo(()=>{const today=new Date();today.setHours(0,0,0,0);const sun=new Date(today);sun.setDate(today.getDate()-today.getDay()-15*7);const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return[...Array(16)].map((_,w)=>[...Array(7)].map((_,d)=>{const dt=new Date(sun);dt.setDate(sun.getDate()+w*7+d);const key=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;const mins=sessions.filter(s=>s.date===key).reduce((a,s)=>a+(s.duration||0),0);return{key,mins,monthLabel:dt.getDate()===1?MONTHS[dt.getMonth()]:""};}))},[sessions]);
   const partnerStats=useMemo(()=>{const m={};sessions.forEach(s=>{if(!s.partner?.trim())return;const n=s.partner.trim();if(!m[n])m[n]={name:n,count:0,subs:0,tapped:0};m[n].count++;m[n].subs+=s.taps_given||0;m[n].tapped+=s.taps_received||0;});return Object.values(m).sort((a,b)=>b.count-a.count);},[sessions]);
@@ -486,6 +492,47 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
     {selComp.joinedNogi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>No-Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiAbsMedal||"None"}</span></div></div></div></div>}
     {medals.length>0&&<div style={{...card,marginBottom:0}}><SH>Medals</SH><div style={{display:"flex",gap:12,flexWrap:"wrap"}}>{medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:12,height:12,borderRadius:"50%",background:MEDAL_COLORS[m.medal]}}/><span style={{fontSize:13,color:"#fff"}}>{m.label}: {m.medal}</span></div>)}</div></div>}
     {selComp.notes&&<div style={{...card}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selComp.notes}</p></div>}
+    {selComp.weightTarget&&(()=>{
+      const wis=(selComp.weighIns||[]).sort((a,b)=>b.date.localeCompare(a.date));
+      const latest=wis[0];
+      const toGo=latest?(latest.weight-parseFloat(selComp.weightTarget)).toFixed(1):null;
+      const madeWeight=toGo!==null&&parseFloat(toGo)<=0;
+      const daysOut=Math.ceil((new Date(selComp.date)-new Date())/86400000);
+      return(<div style={{...card,marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <p style={{margin:0,fontSize:14,fontWeight:700,color:"#fff"}}>Weight Cut</p>
+          <span style={{fontSize:12,padding:"3px 12px",borderRadius:50,background:madeWeight?POS+"20":"#2C2C2E",color:madeWeight?POS:"#8E8E93",fontWeight:600}}>Target: {selComp.weightTarget} kg</span>
+        </div>
+        <div style={{textAlign:"center",marginBottom:wis.length>0?16:12}}>
+          <p style={{margin:0,fontSize:52,fontWeight:800,letterSpacing:"-2px",color:madeWeight?POS:"#fff",lineHeight:1}}>{latest?latest.weight:"—"}</p>
+          <p style={{margin:"3px 0 0",fontSize:12,color:"#555"}}>{latest?"kg":"No weigh-ins logged yet"}</p>
+          {latest&&<p style={{margin:"10px 0 0",fontSize:13,fontWeight:600,color:madeWeight?POS:"#8E8E93"}}>
+            {madeWeight?"Made weight!":toGo+" kg to cut"}
+            {daysOut>0?" · "+daysOut+" day"+(daysOut!==1?"s":"")+" out":daysOut===0?" · Competition day!":""}
+          </p>}
+        </div>
+        {wis.length>0&&<div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4,marginBottom:14,WebkitOverflowScrolling:"touch"}}>
+          {wis.map(wi=><div key={wi.id} style={{flexShrink:0,background:"#2C2C2E",borderRadius:12,padding:"10px 14px",textAlign:"center",minWidth:68}}>
+            <p style={{margin:0,fontSize:15,fontWeight:700,color:"#fff"}}>{wi.weight}<span style={{fontSize:10,color:"#555"}}> kg</span></p>
+            <p style={{margin:"3px 0 6px",fontSize:10,color:"#555"}}>{wi.date.slice(5).replace("-","/")}</p>
+            <button onClick={()=>deleteWeighIn(wi.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#444",padding:0,minHeight:22,minWidth:22}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
+          </div>)}
+        </div>}
+        {showWIForm?<div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+            <div><Lbl>Date</Lbl><input type="date" max={todayISO()} value={wiDate} onChange={e=>setWiDate(e.target.value)}/></div>
+            <div><Lbl>Weight (kg)</Lbl><input type="number" step="0.1" min="30" max="200" value={wiWeight} onChange={e=>setWiWeight(e.target.value)} placeholder="74.5"/></div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>setShowWIForm(false)} style={{flex:1,padding:"13px",borderRadius:12,background:"#2C2C2E",color:"#8E8E93",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14,minHeight:44}}>Cancel</button>
+            <button onClick={addWeighIn} disabled={!wiWeight} style={{flex:2,padding:"13px",borderRadius:12,background:wiWeight?LIME:"#2C2C2E",color:wiWeight?LIME_DK:"#555",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14,minHeight:44}}>Save</button>
+          </div>
+        </div>
+        :<button onClick={()=>setShowWIForm(true)} style={{width:"100%",padding:"13px",borderRadius:12,background:"#2C2C2E",color:"#8E8E93",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:6,minHeight:44}}>
+          <i className="ti ti-scale" style={{fontSize:15}}/>Log weigh-in
+        </button>}
+      </div>);
+    })()}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8,marginBottom:20}}>
       <button onClick={()=>{onEditComp(selComp);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#2C2C2E",color:"#fff",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Edit</button>
       <button onClick={()=>{deleteComp(selComp.id);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button>
@@ -871,13 +918,14 @@ function ProfileModal({profile,setProfile,onClose}){
 function MedalPicker({label,value,onChange}){return(<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>{label}</p><div style={{display:"flex",gap:10}}>{MEDAL_OPTS.map(med=>(<button key={med} onClick={()=>onChange(med)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0}}><div style={{width:36,height:36,borderRadius:"50%",background:MEDAL_COLORS[med],border:value===med?"3px solid #AAFF00":"3px solid transparent",transition:"all 0.2s",opacity:med==="None"?0.4:1}}/><span style={{fontSize:10,color:value===med?"#fff":"#555",fontFamily:"inherit"}}>{med}</span></button>))}</div></div>);}
 
 function CompetitionModal({onClose,onSave,editItem}){
-  const [f,setF]=useState(editItem||{date:todayISO(),event:"",location:"",weight:WEIGHTS[4],wins:0,losses:0,notes:"",ageBracket:"Adult",compBelt:"Purple",joinedGi:true,joinedNogi:false,giWeightMedal:"None",giAbsMedal:"None",nogiWeightMedal:"None",nogiAbsMedal:"None",photo:""});
+  const [f,setF]=useState(editItem||{date:todayISO(),event:"",location:"",weight:WEIGHTS[4],wins:0,losses:0,notes:"",ageBracket:"Adult",compBelt:"Purple",joinedGi:true,joinedNogi:false,giWeightMedal:"None",giAbsMedal:"None",nogiWeightMedal:"None",nogiAbsMedal:"None",photo:"",weightTarget:""});
   const sv=useCallback((k,v)=>setF(p=>({...p,[k]:v})),[]);
   const handlePhoto=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{const img=new Image();img.onload=()=>{const canvas=document.createElement("canvas");const max=480;let w=img.width,h=img.height;if(w>max){h=Math.round(h*max/w);w=max;}if(h>max){w=Math.round(w*max/h);h=max;}canvas.width=w;canvas.height=h;canvas.getContext("2d").drawImage(img,0,0,w,h);const data=canvas.toDataURL("image/jpeg",0.6);if(data.length>400000){alert("Photo is too large even after compression. Please choose a smaller image.");return;}sv("photo",data);};img.src=ev.target.result;};reader.readAsDataURL(file);};
   return(<BottomSheet onClose={onClose} title={editItem?"Edit competition":"Add competition"}>
     <div style={{marginBottom:12}}><Lbl>Event name <span style={{color:"#E24B4A"}}>*</span></Lbl><input value={f.event} onChange={e=>sv("event",e.target.value)} placeholder="e.g. Metro BJJ Open"/></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><div><Lbl>Date</Lbl><input type="date" value={f.date} onChange={e=>sv("date",e.target.value)}/></div><div><Lbl>Location</Lbl><input value={f.location} onChange={e=>sv("location",e.target.value)} placeholder="e.g. Manila"/></div></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><div><Lbl>Age bracket</Lbl><select value={f.ageBracket} onChange={e=>sv("ageBracket",e.target.value)}>{AGE_BRACKETS.map(a=><option key={a}>{a}</option>)}</select></div><div><Lbl>Weight class</Lbl><select value={f.weight} onChange={e=>sv("weight",e.target.value)}>{WEIGHTS.map(w=><option key={w}>{w}</option>)}</select></div></div>
+    <div style={{marginBottom:12}}><Lbl>Weight cut target <span style={{color:"#555",fontWeight:400,fontSize:11}}>(kg, optional)</span></Lbl><input type="number" step="0.1" min="30" max="200" value={f.weightTarget||""} onChange={e=>sv("weightTarget",e.target.value)} placeholder="e.g. 72 — enables weigh-in tracking"/></div>
     <div style={{marginBottom:12}}><Lbl>Belt level</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{COMP_BELTS.map(b=><button key={b} onClick={()=>sv("compBelt",b)} style={{padding:"7px 14px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,background:f.compBelt===b?"#AAFF00":"#2C2C2E",color:f.compBelt===b?"#000":"#8E8E93",fontWeight:f.compBelt===b?700:400}}>{b}</button>)}</div></div>
     <div style={{marginBottom:12}}><Lbl>Divisions entered</Lbl><div style={{display:"flex",gap:8}}><button onClick={()=>sv("joinedGi",!f.joinedGi)} style={{padding:"9px 20px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:f.joinedGi?"#AAFF00":"#2C2C2E",color:f.joinedGi?"#000":"#8E8E93",fontWeight:f.joinedGi?700:400}}>Gi</button><button onClick={()=>sv("joinedNogi",!f.joinedNogi)} style={{padding:"9px 20px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:f.joinedNogi?"#AAFF00":"#2C2C2E",color:f.joinedNogi?"#000":"#8E8E93",fontWeight:f.joinedNogi?700:400}}>No-Gi</button></div></div>
     {f.joinedGi&&<div style={{background:"#2C2C2E",borderRadius:16,padding:"14px 16px",marginBottom:12}}><p style={{margin:"0 0 12px",fontSize:13,fontWeight:600,color:"#fff"}}>Gi</p><MedalPicker label="Weight division" value={f.giWeightMedal} onChange={v=>sv("giWeightMedal",v)}/><MedalPicker label="Absolute division" value={f.giAbsMedal} onChange={v=>sv("giAbsMedal",v)}/></div>}
