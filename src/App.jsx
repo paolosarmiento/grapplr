@@ -511,6 +511,7 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
       {/* Heatmap hero */}
       <SH>Training heatmap</SH>
       <div style={{...card,paddingRight:12}}>
+        <p style={{margin:"0 0 12px",fontSize:12,color:"#555",lineHeight:1.4}}>Each square is one day. <span style={{color:LIME}}>Brighter</span> = more mat time.</p>
         <div style={{display:"flex",gap:2}}>
           {/* Day labels column */}
           <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4,paddingTop:16}}>
