@@ -468,6 +468,9 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
   const pbs=useMemo(()=>calcPersonalBests(sessions),[sessions]);
   const toggleGoal=useCallback(id=>{setGoals(p=>{const g=p.find(x=>x.id===id);if(!g)return p;const done=!g.done;if(done)showToast("Goal achieved! Keep pushing.");else showToast("Goal re-opened.");return p.map(x=>x.id===id?{...x,done}:x);});},[setGoals,showToast]);
   const deleteComp=id=>{setCompetitions(p=>p.filter(x=>x.id!==id));showToast("Competition removed");};
+  const subsData=useMemo(()=>[...sessions].sort((a,b)=>a.date.localeCompare(b.date)).slice(-20).map(s=>({d:s.date.slice(5),subs:s.taps_given||0,tapped:s.taps_received||0})),[sessions]);
+  const heatmap=useMemo(()=>{const today=new Date();today.setHours(0,0,0,0);const sun=new Date(today);sun.setDate(today.getDate()-today.getDay()-15*7);const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return[...Array(16)].map((_,w)=>{const cells=[...Array(7)].map((_,d)=>{const dt=new Date(sun);dt.setDate(sun.getDate()+w*7+d);const key=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;const mins=sessions.filter(s=>s.date===key).reduce((a,s)=>a+(s.duration||0),0);return{key,mins,label:dt.getDate()===1?MONTHS[dt.getMonth()]:""};});return cells;});},[sessions]);
+  const partnerStats=useMemo(()=>{const m={};sessions.forEach(s=>{if(!s.partner?.trim())return;const n=s.partner.trim();if(!m[n])m[n]={name:n,count:0,subs:0,tapped:0};m[n].count++;m[n].subs+=s.taps_given||0;m[n].tapped+=s.taps_received||0;});return Object.values(m).sort((a,b)=>b.count-a.count);},[sessions]);
 
   // Full-page comp detail view
   if(selComp){const medals=getMedals(selComp);return(<div className="fade-in">
@@ -489,7 +492,7 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
   </div>);}
 
   return(<div className="fade-in">
-    <SegCtrl opts={[["stats","Stats"],["comp","Comp"],["goals","Goals"]]} value={sub} onChange={setSub}/>
+    <SegCtrl opts={[["stats","Stats"],["insights","Insights"],["comp","Comp"],["goals","Goals"]]} value={sub} onChange={setSub}/>
     {sub==="stats"&&<div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
         {[{l:"Subs landed",v:totals.given,c:POS},{l:"Times tapped",v:totals.received,c:"#E24B4A"},{l:"Mat hours",v:Math.floor(totals.mins/60),c:"#fff"}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:26,fontWeight:800,color:m.c}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>))}
@@ -498,6 +501,64 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
         {[{l:"Best week",v:`${pbs.bestWeek} sessions`},{l:"Best session",v:`${pbs.bestSubs} subs`}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:LIME}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555"}}>{m.l}</p></div>))}
       </div>
       <div style={card}><p style={{margin:"0 0 14px",fontSize:14,fontWeight:600,color:"#fff"}}>Weekly mat time</p><div style={{height:160}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weeklyData} margin={{top:0,right:4,bottom:0,left:-28}}><XAxis dataKey="week" tick={{fontSize:10,fill:"#555"}}/><YAxis tick={{fontSize:10,fill:"#555"}}/><Tooltip contentStyle={tt} formatter={v=>`${v} hrs`}/><Bar dataKey="hours" fill={LIME} radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div></div>
+    </div>}
+    {sub==="insights"&&<div>
+      {/* Submission rate */}
+      <div style={card}>
+        <p style={{margin:"0 0 2px",fontSize:14,fontWeight:600,color:"#fff"}}>Submission rate</p>
+        <p style={{margin:"0 0 14px",fontSize:12,color:"#555"}}>Subs landed vs. tapped — last {subsData.length} sessions</p>
+        {subsData.length===0?<p style={{margin:0,fontSize:13,color:"#555",textAlign:"center",padding:"20px 0"}}>No sessions logged yet</p>:<>
+          <div style={{height:150}}><ResponsiveContainer width="100%" height="100%"><BarChart data={subsData} margin={{top:0,right:4,bottom:0,left:-28}} barGap={2} barCategoryGap="30%"><XAxis dataKey="d" tick={{fontSize:8,fill:"#555"}} interval="preserveStartEnd"/><YAxis tick={{fontSize:10,fill:"#555"}} allowDecimals={false}/><Tooltip contentStyle={tt} formatter={(v,n)=>[v,n==="subs"?"Subs landed":"Times tapped"]}/><Bar dataKey="subs" fill={POS} radius={[4,4,0,0]} name="subs"/><Bar dataKey="tapped" fill="#E24B4A" radius={[4,4,0,0]} name="tapped"/></BarChart></ResponsiveContainer></div>
+          <div style={{display:"flex",gap:16,marginTop:10,justifyContent:"center"}}><span style={{fontSize:11,color:POS,display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:POS,display:"inline-block"}}/> Subs landed</span><span style={{fontSize:11,color:"#E24B4A",display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:"#E24B4A",display:"inline-block"}}/> Times tapped</span></div>
+        </>}
+      </div>
+      {/* Heatmap */}
+      <SH>Training heatmap</SH>
+      <div style={{...card,paddingRight:12}}>
+        <p style={{margin:"0 0 12px",fontSize:12,color:"#555"}}>16 weeks of mat time</p>
+        <div style={{display:"flex",gap:2}}>
+          {/* Day labels */}
+          <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4,paddingTop:0}}>
+            {["S","M","T","W","T","F","S"].map((d,i)=><div key={i} style={{height:14,fontSize:9,color:"#444",lineHeight:"14px",width:10}}>{i%2===1?d:""}</div>)}
+          </div>
+          {/* Grid */}
+          <div style={{display:"flex",gap:2,flex:1,overflowX:"auto"}}>
+            {heatmap.map((week,wi)=>(
+              <div key={wi} style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
+                {week.map((day,di)=>(
+                  <div key={di} style={{width:14,height:14,borderRadius:2,background:day.mins===0?"#2C2C2E":day.mins<60?LIME+"55":day.mins<120?LIME+"99":LIME,flexShrink:0}}/>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginTop:10,justifyContent:"flex-end"}}>
+          <span style={{fontSize:10,color:"#555"}}>Less</span>
+          {["#2C2C2E",LIME+"55",LIME+"99",LIME].map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:2,background:c}}/>)}
+          <span style={{fontSize:10,color:"#555"}}>More</span>
+        </div>
+      </div>
+      {/* Partner breakdown */}
+      <SH>Partner breakdown</SH>
+      {partnerStats.length===0?
+        <div style={{textAlign:"center",padding:"36px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}>
+          <i className="ti ti-users" style={{fontSize:28,color:"#555",display:"block",marginBottom:8}}/>
+          <p style={{margin:0,fontSize:14,color:"#555"}}>Log sessions with a partner name to see stats</p>
+        </div>
+      :partnerStats.map(p=>{
+        const total=p.subs+p.tapped;
+        const subPct=total>0?Math.round(p.subs/total*100):0;
+        return(<div key={p.name} style={card}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{p.name}</p>
+            <span style={{fontSize:12,color:"#555"}}>{p.count} session{p.count!==1?"s":""}</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:total>0?10:0}}>
+            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:POS}}>{p.subs}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Subs landed</p></div>
+            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:"#E24B4A"}}>{p.tapped}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Times tapped</p></div>
+          </div>
+          {total>0&&<><div style={{height:5,borderRadius:3,background:"#E24B4A",overflow:"hidden"}}><div style={{width:`${subPct}%`,height:"100%",background:POS,borderRadius:3}}/></div><div style={{display:"flex",justifyContent:"space-between",marginTop:5}}><span style={{fontSize:11,color:POS,fontWeight:600}}>{subPct}% sub rate</span><span style={{fontSize:11,color:"#555"}}>{p.subs}/{total} total</span></div></>}
+        </div>);})}
     </div>}
     {sub==="comp"&&<div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
