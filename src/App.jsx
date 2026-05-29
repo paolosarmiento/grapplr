@@ -26,7 +26,7 @@ const INJURY_STATUS=["Active","Recovering","Healed"];
 const AGE_BRACKETS=["Adult","Master 1","Master 2","Master 3","Master 4","Master 5","Master 6","Juvenile"];
 const COMP_BELTS=["White","Blue","Purple","Brown","Black"];
 const MEDAL_OPTS=["None","Gold","Silver","Bronze"];
-const MEDAL_COLORS={Gold:"#FFD700",Silver:"#C0C0C0",Bronze:"#CD7F32",None:"#2C2C2E"};
+const MEDAL_COLORS={Gold:"#FFD700",Silver:"#C0C0C0",Bronze:"#CD7F32",None:"var(--surface)"};
 const WEIGHTS=["Rooster (-57.5kg)","Light Feather (-64kg)","Feather (-70kg)","Light (-76kg)","Middle (-82.3kg)","Medium Heavy (-88.3kg)","Heavy (-94.3kg)","Super Heavy (-100.5kg)","Ultra Heavy (+100.5kg)"];
 const MOTIVATIONS=["A black belt is a white belt who never quit.","The mat is your mirror. Show up and reflect.","Roll hard. Tap. Learn. Repeat.","Every session is a deposit in your BJJ bank.","Embrace the grind. Trust the process.","Discomfort is the price of growth on the mat.","Your worst day training beats your best day on the couch."];
 const BELTS=[{id:"white",color:"#E8E8E8",text:"#333",label:"White"},{id:"blue",color:"#1565C0",text:"#fff",label:"Blue"},{id:"purple",color:"#6A1B9A",text:"#fff",label:"Purple"},{id:"brown",color:"#5D4037",text:"#fff",label:"Brown"},{id:"black",color:"#222",text:"#fff",label:"Black"},{id:"coral",color:"#CC3D00",text:"#fff",label:"Coral"}];
@@ -131,16 +131,27 @@ function useFirestore(userId,key,value,loaded){
 }
 
 //  GLOBAL STYLES 
-const GS=()=>(<style>{`
+const GS=({light})=>(<style>{`
+:root{
+  --bg:#000;--card:#1C1C1E;--surface:#2C2C2E;--border:#3A3A3C;--border-sub:#2A2A2C;--border-dim:#1A1A1A;
+  --t1:#ffffff;--t2:#8E8E93;--t3:#555555;--t4:#444444;
+  --overlay:rgba(0,0,0,0.85);--overlay-hdr:rgba(0,0,0,0.92);--stripe:rgba(255,255,255,0.5);
+}
+${light?`
+:root{
+  --bg:#F2F2F7;--card:#ffffff;--surface:#F2F2F7;--border:#D1D1D6;--border-sub:#E5E5EA;--border-dim:#E5E5EA;
+  --t1:#000000;--t2:#3C3C43;--t3:#8E8E93;--t4:#6C6C70;
+  --overlay:rgba(0,0,0,0.6);--overlay-hdr:rgba(242,242,247,0.94);--stripe:rgba(0,0,0,0.3);
+}`:""}
 *{box-sizing:border-box;}html,body{overflow-x:hidden;max-width:100%;}
 .modal-scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;}
-input,textarea,select{background:#2C2C2E!important;border:none!important;border-radius:12px!important;padding:14px 16px!important;font-size:15px!important;color:#fff!important;font-family:inherit!important;outline:none!important;width:100%;-webkit-appearance:none;appearance:none;}
+input,textarea,select{background:var(--surface)!important;border:none!important;border-radius:12px!important;padding:14px 16px!important;font-size:15px!important;color:var(--t1)!important;font-family:inherit!important;outline:none!important;width:100%;-webkit-appearance:none;appearance:none;}
 input:focus,textarea:focus,select:focus{box-shadow:0 0 0 3px rgba(170,255,0,0.2)!important;}
 textarea{resize:vertical;min-height:76px;}
-::placeholder{color:#555!important;opacity:1!important;}
+::placeholder{color:var(--t3)!important;opacity:1!important;}
 input[type=range]{padding:4px 0!important;background:transparent!important;border-radius:0!important;}
-body{background:#000;margin:0;}
-option{background:#1C1C1E;color:#fff;}
+body{background:var(--bg);margin:0;}
+option{background:var(--card);color:var(--t1);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes glowPulse{0%,100%{box-shadow:0 0 24px rgba(170,255,0,0.4)}50%{box-shadow:0 0 48px rgba(170,255,0,0.65)}}
 @keyframes streakPulse{0%,100%{text-shadow:0 0 20px rgba(255,160,0,0.5)}50%{text-shadow:0 0 40px rgba(255,160,0,0.9)}}
@@ -153,16 +164,16 @@ option{background:#1C1C1E;color:#fff;}
 `}</style>);
 
 //  SHARED UI 
-const card={background:"#1C1C1E",borderRadius:20,padding:"16px 18px",marginBottom:12,border:"0.5px solid #2A2A2C"};
-const mc={background:"#1C1C1E",borderRadius:16,padding:"14px 10px",border:"0.5px solid #2A2A2C"};
-const tt={fontSize:12,background:"#1C1C1E",border:"0.5px solid #3A3A3C",borderRadius:8,color:"#fff"};
-const Lbl=({c,children})=><p style={{margin:"0 0 8px",fontSize:13,fontWeight:500,color:c||"#8E8E93"}}>{children}</p>;
-const SH=({children})=><p style={{margin:"24px 0 10px",fontSize:11,fontWeight:600,color:"#555",textTransform:"uppercase",letterSpacing:"1px"}}>{children}</p>;
-const Pill=({children,active,onClick,color,s={}})=><button onClick={onClick} className="tap" style={{border:"none",borderRadius:50,cursor:"pointer",fontFamily:"inherit",fontWeight:active?600:400,fontSize:13,padding:"8px 18px",background:active?(color||LIME):"#2C2C2E",color:active?(color?"#fff":LIME_DK):"#8E8E93",transition:"all 0.15s",...s}}>{children}</button>;
-const PBtn=({children,onClick,s={},glow=false,disabled=false})=><button onClick={onClick} disabled={disabled} className={glow?"glow-btn tap":"tap"} style={{border:"none",borderRadius:18,cursor:disabled?"not-allowed":"pointer",background:disabled?"#2C2C2E":LIME,color:disabled?"#555":LIME_DK,fontFamily:"inherit",fontWeight:800,fontSize:17,padding:"19px 28px",width:"100%",letterSpacing:"0.3px",opacity:disabled?0.5:1,...s}}>{children}</button>;
-const SkillDots=({skill})=><div style={{display:"flex",gap:4}}>{[1,2,3,4,5].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:i<=skill?SKILL_COLORS[skill]:"#3A3A3C"}}/>)}</div>;
-const SegCtrl=memo(function SegCtrl({opts,value,onChange}){return(<div style={{background:"#1C1C1E",borderRadius:50,padding:3,display:"flex",marginBottom:16,border:"0.5px solid #2A2A2C"}}>{opts.map(([id,label])=>(<button key={id} onClick={()=>onChange(id)} style={{flex:1,border:"none",borderRadius:50,padding:"9px 0",cursor:"pointer",background:value===id?"#2C2C2E":"transparent",color:value===id?"#fff":"#636366",fontWeight:value===id?600:400,fontSize:13,fontFamily:"inherit",transition:"all 0.2s"}}>{label}</button>))}</div>);});
-const Stepper=memo(function Stepper({value,onChange,min=0,max=20,label}){return(<div>{label&&<Lbl>{label}</Lbl>}<div style={{display:"flex",alignItems:"center",background:"#2C2C2E",borderRadius:14,overflow:"hidden"}}><button onClick={()=>onChange(Math.max(min,value-1))} style={{width:52,height:52,border:"none",background:"transparent",cursor:"pointer",fontSize:24,color:"#8E8E93",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button><span style={{flex:1,textAlign:"center",fontSize:22,fontWeight:700,fontFamily:"inherit",color:"#fff"}}>{value}</span><button onClick={()=>onChange(Math.min(max,value+1))} style={{width:52,height:52,border:"none",background:"transparent",cursor:"pointer",fontSize:24,color:LIME_TXT,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>+</button></div></div>);});
+const card={background:"var(--card)",borderRadius:20,padding:"16px 18px",marginBottom:12,border:"0.5px solid var(--border-sub)"};
+const mc={background:"var(--card)",borderRadius:16,padding:"14px 10px",border:"0.5px solid var(--border-sub)"};
+const tt={fontSize:12,background:"var(--card)",border:"0.5px solid var(--border)",borderRadius:8,color:"var(--t1)"};
+const Lbl=({c,children})=><p style={{margin:"0 0 8px",fontSize:13,fontWeight:500,color:c||"var(--t2)"}}>{children}</p>;
+const SH=({children})=><p style={{margin:"24px 0 10px",fontSize:11,fontWeight:600,color:"var(--t3)",textTransform:"uppercase",letterSpacing:"1px"}}>{children}</p>;
+const Pill=({children,active,onClick,color,s={}})=><button onClick={onClick} className="tap" style={{border:"none",borderRadius:50,cursor:"pointer",fontFamily:"inherit",fontWeight:active?600:400,fontSize:13,padding:"8px 18px",background:active?(color||LIME):"var(--surface)",color:active?(color?"#fff":LIME_DK):"var(--t2)",transition:"all 0.15s",...s}}>{children}</button>;
+const PBtn=({children,onClick,s={},glow=false,disabled=false})=><button onClick={onClick} disabled={disabled} className={glow?"glow-btn tap":"tap"} style={{border:"none",borderRadius:18,cursor:disabled?"not-allowed":"pointer",background:disabled?"var(--surface)":LIME,color:disabled?"#555":LIME_DK,fontFamily:"inherit",fontWeight:800,fontSize:17,padding:"19px 28px",width:"100%",letterSpacing:"0.3px",opacity:disabled?0.5:1,...s}}>{children}</button>;
+const SkillDots=({skill})=><div style={{display:"flex",gap:4}}>{[1,2,3,4,5].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:i<=skill?SKILL_COLORS[skill]:"var(--border)"}}/>)}</div>;
+const SegCtrl=memo(function SegCtrl({opts,value,onChange}){return(<div style={{background:"var(--card)",borderRadius:50,padding:3,display:"flex",marginBottom:16,border:"0.5px solid var(--border-sub)"}}>{opts.map(([id,label])=>(<button key={id} onClick={()=>onChange(id)} style={{flex:1,border:"none",borderRadius:50,padding:"9px 0",cursor:"pointer",background:value===id?"var(--surface)":"transparent",color:value===id?"#fff":"#636366",fontWeight:value===id?600:400,fontSize:13,fontFamily:"inherit",transition:"all 0.2s"}}>{label}</button>))}</div>);});
+const Stepper=memo(function Stepper({value,onChange,min=0,max=20,label}){return(<div>{label&&<Lbl>{label}</Lbl>}<div style={{display:"flex",alignItems:"center",background:"var(--surface)",borderRadius:14,overflow:"hidden"}}><button onClick={()=>onChange(Math.max(min,value-1))} style={{width:52,height:52,border:"none",background:"transparent",cursor:"pointer",fontSize:24,color:"var(--t2)",display:"flex",alignItems:"center",justifyContent:"center"}}>−</button><span style={{flex:1,textAlign:"center",fontSize:22,fontWeight:700,fontFamily:"inherit",color:"var(--t1)"}}>{value}</span><button onClick={()=>onChange(Math.min(max,value+1))} style={{width:52,height:52,border:"none",background:"transparent",cursor:"pointer",fontSize:24,color:LIME_TXT,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>+</button></div></div>);});
 
 function BottomSheet({children,onClose,title,noPad=false}){
   useEffect(()=>{
@@ -171,23 +182,23 @@ function BottomSheet({children,onClose,title,noPad=false}){
     return()=>{document.body.style.overflow=prev;};
   },[]);
   return(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={onClose}>
-    <div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",maxHeight:"92dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",padding:noPad?"0":"0 22px 44px"}} onClick={e=>e.stopPropagation()}>
-      <div style={{display:"flex",justifyContent:"center",padding:"14px 0 8px"}}><div style={{width:36,height:5,borderRadius:3,background:"#3A3A3C"}}/></div>
-      {!noPad&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingBottom:18,position:"sticky",top:0,background:"#1C1C1E",zIndex:1,padding:"0 0 18px"}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>{title}</h3><button onClick={onClose} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#8E8E93",fontSize:18}}>×</button></div>}
-      {noPad&&<div style={{padding:"0 22px",display:"flex",alignItems:"center",justifyContent:"space-between",paddingBottom:18}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>{title}</h3><button onClick={onClose} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:18}}>×</button></div>}
+    <div style={{background:"var(--card)",borderRadius:"24px 24px 0 0",maxHeight:"92dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",padding:noPad?"0":"0 22px 44px"}} onClick={e=>e.stopPropagation()}>
+      <div style={{display:"flex",justifyContent:"center",padding:"14px 0 8px"}}><div style={{width:36,height:5,borderRadius:3,background:"var(--border)"}}/></div>
+      {!noPad&&<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingBottom:18,position:"sticky",top:0,background:"var(--card)",zIndex:1,padding:"0 0 18px"}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"var(--t1)"}}>{title}</h3><button onClick={onClose} style={{width:36,height:36,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--t2)",fontSize:18}}>×</button></div>}
+      {noPad&&<div style={{padding:"0 22px",display:"flex",alignItems:"center",justifyContent:"space-between",paddingBottom:18}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"var(--t1)"}}>{title}</h3><button onClick={onClose} style={{width:36,height:36,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",color:"var(--t2)",fontSize:18}}>×</button></div>}
       {noPad?<div style={{padding:"0 22px 44px"}}>{children}</div>:children}
     </div>
   </div>);
 }
 
-function ToastBar({toasts,dismiss}){if(!toasts.length)return null;return(<div style={{position:"fixed",bottom:88,left:0,right:0,display:"flex",flexDirection:"column",gap:8,alignItems:"center",zIndex:400,pointerEvents:"none",padding:"0 16px"}}>{toasts.map(t=>(<div key={t.id} style={{background:"#2C2C2E",color:"#fff",borderRadius:50,padding:"12px 16px 12px 20px",fontSize:14,fontWeight:500,display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 24px rgba(0,0,0,0.6)",pointerEvents:"auto",maxWidth:360,width:"100%"}}><span style={{flex:1}}>{t.msg}</span>{t.action&&<button onClick={()=>{t.action.fn();dismiss(t.id);}} style={{background:LIME,color:LIME_DK,border:"none",borderRadius:50,padding:"6px 14px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>{t.action.label}</button>}<button onClick={()=>dismiss(t.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#636366",padding:4,fontSize:14}}>×</button></div>))}</div>);}
+function ToastBar({toasts,dismiss}){if(!toasts.length)return null;return(<div style={{position:"fixed",bottom:88,left:0,right:0,display:"flex",flexDirection:"column",gap:8,alignItems:"center",zIndex:400,pointerEvents:"none",padding:"0 16px"}}>{toasts.map(t=>(<div key={t.id} style={{background:"var(--surface)",color:"var(--t1)",borderRadius:50,padding:"12px 16px 12px 20px",fontSize:14,fontWeight:500,display:"flex",alignItems:"center",gap:12,boxShadow:"0 4px 24px rgba(0,0,0,0.6)",pointerEvents:"auto",maxWidth:360,width:"100%"}}><span style={{flex:1}}>{t.msg}</span>{t.action&&<button onClick={()=>{t.action.fn();dismiss(t.id);}} style={{background:LIME,color:LIME_DK,border:"none",borderRadius:50,padding:"6px 14px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>{t.action.label}</button>}<button onClick={()=>dismiss(t.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#636366",padding:4,fontSize:14}}>×</button></div>))}</div>);}
 
 const BeltPicker=memo(function BeltPicker({value,onChange}){return(<div style={{display:"flex",justifyContent:"space-between",gap:4}}>{BELTS.map(b=>(<button key={b.id} onClick={()=>onChange(b.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:7,background:"none",border:"none",cursor:"pointer",padding:"4px 0"}}><div style={{width:44,height:44,borderRadius:"50%",background:b.color,display:"flex",alignItems:"center",justifyContent:"center",outline:value===b.id?`3px solid ${LIME}`:"3px solid transparent",outlineOffset:2,boxShadow:value===b.id?`0 0 14px ${LIME}60`:"none",transition:"all 0.2s"}}>{value===b.id&&<span style={{fontSize:16,color:b.text}}></span>}</div><span style={{fontSize:10,color:value===b.id?"#fff":"#636366",fontWeight:value===b.id?600:400,fontFamily:"inherit"}}>{b.label}</span></button>))}</div>);});
 
-const StripePicker=memo(function StripePicker({value,onChange}){return(<div style={{background:"#2C2C2E",borderRadius:16,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>{[0,1,2,3,4].map(n=>(<button key={n} onClick={()=>onChange(n)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,background:"none",border:"none",cursor:"pointer",padding:"4px 8px",minWidth:44,minHeight:44,justifyContent:"center"}}><div style={{width:38,height:38,borderRadius:"50%",background:value===n?LIME:"#3A3A3C",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"}}><span style={{fontSize:15,fontWeight:700,color:value===n?LIME_DK:"#636366",fontFamily:"inherit"}}>{n}</span></div><span style={{fontSize:10,color:value===n?"#fff":"#636366",fontFamily:"inherit"}}>{n===0?"None":n===1?"Stripe":"Stripes"}</span></button>))}</div>);});
+const StripePicker=memo(function StripePicker({value,onChange}){return(<div style={{background:"var(--surface)",borderRadius:16,padding:"16px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>{[0,1,2,3,4].map(n=>(<button key={n} onClick={()=>onChange(n)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,background:"none",border:"none",cursor:"pointer",padding:"4px 8px",minWidth:44,minHeight:44,justifyContent:"center"}}><div style={{width:38,height:38,borderRadius:"50%",background:value===n?LIME:"var(--border)",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.2s"}}><span style={{fontSize:15,fontWeight:700,color:value===n?LIME_DK:"#636366",fontFamily:"inherit"}}>{n}</span></div><span style={{fontSize:10,color:value===n?"#fff":"#636366",fontFamily:"inherit"}}>{n===0?"None":n===1?"Stripe":"Stripes"}</span></button>))}</div>);});
 
 const SCard=memo(function SCard({s,onDelete,onEdit}){
-  const moodColor=MOOD_C[s.mood]||"#3A3A3C";
+  const moodColor=MOOD_C[s.mood]||"var(--border)";
   return(<div className="tap" style={{...card,borderLeft:`3px solid ${moodColor}50`}}>
     <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
       <div style={{width:46,height:46,borderRadius:14,background:LIME_DIM,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,border:`1px solid ${LIME}20`}}>
@@ -196,16 +207,16 @@ const SCard=memo(function SCard({s,onDelete,onEdit}){
       </div>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-          <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{s.duration} min{s.partner?` · ${s.partner}`:""}</p>
+          <p style={{margin:0,fontSize:15,fontWeight:600,color:"var(--t1)"}}>{s.duration} min{s.partner?` · ${s.partner}`:""}</p>
           <div style={{display:"flex",gap:2,flexShrink:0}}>
-            {onEdit&&<button onClick={e=>{e.stopPropagation();onEdit(s);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>}
-            {onDelete&&<button onClick={e=>{e.stopPropagation();onDelete(s.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>}
+            {onEdit&&<button onClick={e=>{e.stopPropagation();onEdit(s);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"var(--t3)",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>}
+            {onDelete&&<button onClick={e=>{e.stopPropagation();onDelete(s.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"var(--t3)",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>}
           </div>
         </div>
-        {s.notes&&<p style={{margin:"0 0 6px",fontSize:13,color:"#8E8E93",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.notes}</p>}
+        {s.notes&&<p style={{margin:"0 0 6px",fontSize:13,color:"var(--t2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.notes}</p>}
         <div style={{display:"flex",gap:12,alignItems:"center"}}>
           <span style={{fontSize:12,color:POS,fontWeight:600}}>{s.taps_given||0} subs</span>
-          <span style={{fontSize:12,color:"#555"}}>tapped {s.taps_received||0}×</span>
+          <span style={{fontSize:12,color:"var(--t3)"}}>tapped {s.taps_received||0}×</span>
           {s.rounds?.length>0&&<span style={{fontSize:12,color:"#636366"}}>{s.rounds.length} rounds</span>}
           {s.mood&&<span style={{marginLeft:"auto",fontSize:11,padding:"2px 10px",borderRadius:50,background:moodColor+"20",color:moodColor,fontWeight:600}}>{s.mood}</span>}
         </div>
@@ -225,28 +236,28 @@ function Onboarding({onDone}){
   const steps=[
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"48px 0 32px"}} className="fade-in">
       <img src={LOGO} alt="Grapplr" style={{width:"80%",maxWidth:280,objectFit:"contain",marginBottom:36}}/>
-      <h1 style={{fontSize:34,fontWeight:800,margin:"0 0 10px",color:"#fff",letterSpacing:"-0.5px"}}>Your BJJ OS</h1>
-      <p style={{fontSize:16,color:"#8E8E93",margin:"0 0 52px",lineHeight:1.7,maxWidth:280}}>Track every session. Analyze your game. Evolve as a grappler.</p>
+      <h1 style={{fontSize:34,fontWeight:800,margin:"0 0 10px",color:"var(--t1)",letterSpacing:"-0.5px"}}>Your BJJ OS</h1>
+      <p style={{fontSize:16,color:"var(--t2)",margin:"0 0 52px",lineHeight:1.7,maxWidth:280}}>Track every session. Analyze your game. Evolve as a grappler.</p>
       <PBtn onClick={()=>setStep(1)} glow>Get started →</PBtn>
     </div>,
     <div style={{padding:"20px 0"}} className="fade-in">
-      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"#fff"}}>What's your name?</h2>
-      <p style={{fontSize:15,color:"#8E8E93",margin:"0 0 32px"}}>How should we address you on the mat?</p>
+      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"var(--t1)"}}>What's your name?</h2>
+      <p style={{fontSize:15,color:"var(--t2)",margin:"0 0 32px"}}>How should we address you on the mat?</p>
       <Lbl>Full name</Lbl>
       <input value={f.name} onChange={e=>sv("name",e.target.value)} placeholder="e.g. Paolo Santos" style={{marginBottom:32}}/>
       <PBtn onClick={()=>f.name.trim()&&setStep(2)} disabled={!f.name.trim()}>Continue →</PBtn>
     </div>,
     <div style={{padding:"20px 0"}} className="fade-in">
-      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"#fff"}}>Current belt</h2>
-      <p style={{fontSize:15,color:"#8E8E93",margin:"0 0 28px"}}>Where are you on your journey?</p>
+      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"var(--t1)"}}>Current belt</h2>
+      <p style={{fontSize:15,color:"var(--t2)",margin:"0 0 28px"}}>Where are you on your journey?</p>
       <BeltPicker value={f.belt} onChange={v=>sv("belt",v)}/>
       <SH>Stripes</SH>
       <StripePicker value={f.stripes} onChange={v=>sv("stripes",v)}/>
       <PBtn onClick={()=>setStep(3)} s={{marginTop:28}}>Continue →</PBtn>
     </div>,
     <div style={{padding:"20px 0"}} className="fade-in">
-      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"#fff"}}>Your academy</h2>
-      <p style={{fontSize:15,color:"#8E8E93",margin:"0 0 28px"}}>Tell us where you train.</p>
+      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"var(--t1)"}}>Your academy</h2>
+      <p style={{fontSize:15,color:"var(--t2)",margin:"0 0 28px"}}>Tell us where you train.</p>
       <Lbl>Gym / Academy</Lbl>
       <input value={f.gym} onChange={e=>sv("gym",e.target.value)} placeholder="e.g. Flow Studio" style={{marginBottom:12}}/>
       <Lbl>Head coach</Lbl>
@@ -258,30 +269,30 @@ function Onboarding({onDone}){
       <PBtn onClick={()=>setStep(4)} s={{marginTop:8}}>Continue →</PBtn>
     </div>,
     <div style={{padding:"20px 0"}} className="fade-in">
-      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"#fff"}}>Your game</h2>
-      <p style={{fontSize:15,color:"#8E8E93",margin:"0 0 24px"}}>This personalizes your coaching insights.</p>
+      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"var(--t1)"}}>Your game</h2>
+      <p style={{fontSize:15,color:"var(--t2)",margin:"0 0 24px"}}>This personalizes your coaching insights.</p>
       <Lbl>Playing style</Lbl>
       <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:24}}>{GAME_STYLES.map(g=><Pill key={g} active={f.gameStyle===g} onClick={()=>sv("gameStyle",g)}>{g}</Pill>)}</div>
-      <Lbl>Favorite positions <span style={{color:"#555",fontWeight:400}}>(up to 3)</span></Lbl>
+      <Lbl>Favorite positions <span style={{color:"var(--t3)",fontWeight:400}}>(up to 3)</span></Lbl>
       <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:32}}>{FAV_POSITIONS.map(p=><Pill key={p} active={f.favPositions.includes(p)} onClick={()=>f.favPositions.length<3||f.favPositions.includes(p)?togglePos(p):null} s={{opacity:f.favPositions.length>=3&&!f.favPositions.includes(p)?0.35:1}}>{p}</Pill>)}</div>
       <PBtn onClick={()=>setStep(5)}>Continue →</PBtn>
     </div>,
     <div style={{padding:"20px 0"}} className="fade-in">
-      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"#fff"}}>Weekly goal</h2>
-      <p style={{fontSize:15,color:"#8E8E93",margin:"0 0 40px"}}>How many sessions per week are you targeting?</p>
+      <h2 style={{fontSize:26,fontWeight:700,margin:"0 0 6px",color:"var(--t1)"}}>Weekly goal</h2>
+      <p style={{fontSize:15,color:"var(--t2)",margin:"0 0 40px"}}>How many sessions per week are you targeting?</p>
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:36,marginBottom:48}}>
-        <button onClick={()=>sv("weeklyGoal",Math.max(1,f.weeklyGoal-1))} style={{width:56,height:56,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",fontSize:28,color:"#fff",fontFamily:"inherit"}}>−</button>
-        <div style={{textAlign:"center"}}><p style={{margin:0,fontSize:72,fontWeight:800,color:LIME,lineHeight:1}}>{f.weeklyGoal}</p><p style={{margin:"6px 0 0",fontSize:14,color:"#8E8E93"}}>sessions / week</p></div>
-        <button onClick={()=>sv("weeklyGoal",Math.min(7,f.weeklyGoal+1))} style={{width:56,height:56,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",fontSize:28,color:LIME_TXT,fontWeight:700,fontFamily:"inherit"}}>+</button>
+        <button onClick={()=>sv("weeklyGoal",Math.max(1,f.weeklyGoal-1))} style={{width:56,height:56,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",fontSize:28,color:"var(--t1)",fontFamily:"inherit"}}>−</button>
+        <div style={{textAlign:"center"}}><p style={{margin:0,fontSize:72,fontWeight:800,color:LIME,lineHeight:1}}>{f.weeklyGoal}</p><p style={{margin:"6px 0 0",fontSize:14,color:"var(--t2)"}}>sessions / week</p></div>
+        <button onClick={()=>sv("weeklyGoal",Math.min(7,f.weeklyGoal+1))} style={{width:56,height:56,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",fontSize:28,color:LIME_TXT,fontWeight:700,fontFamily:"inherit"}}>+</button>
       </div>
       <PBtn onClick={()=>onDone({...f,onboarded:true})} glow>Let's roll →</PBtn>
     </div>
   ];
   return(
-    <div style={{maxWidth:480,margin:"0 auto",padding:"0 24px",minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+    <div style={{maxWidth:480,margin:"0 auto",padding:"0 24px",minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",justifyContent:"center"}}>
       {step>0&&<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:28}}>
-        <button onClick={()=>setStep(s=>s-1)} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button>
-        <div style={{flex:1,display:"flex",gap:5}}>{[1,2,3,4,5].map(i=><div key={i} style={{flex:1,height:3,borderRadius:2,background:step>=i?LIME:"#2C2C2E",transition:"background 0.3s"}}/>)}</div>
+        <button onClick={()=>setStep(s=>s-1)} style={{width:44,height:44,borderRadius:"50%",background:"var(--card)",border:"none",cursor:"pointer",color:"var(--t1)",fontSize:18}}>←</button>
+        <div style={{flex:1,display:"flex",gap:5}}>{[1,2,3,4,5].map(i=><div key={i} style={{flex:1,height:3,borderRadius:2,background:step>=i?LIME:"var(--surface)",transition:"background 0.3s"}}/>)}</div>
       </div>}
       {steps[step]}
     </div>
@@ -315,9 +326,9 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
     <div className="fade-in">
       {/* Greeting */}
       <div style={{marginBottom:24}}>
-        <p style={{margin:"0 0 2px",fontSize:12,color:"#555",fontWeight:500,textTransform:"uppercase",letterSpacing:"1px"}}>{getGreeting()}{profile.gym?` · ${profile.gym}`:""}</p>
-        <h1 style={{margin:0,fontSize:30,fontWeight:800,color:"#fff",letterSpacing:"-0.5px"}}>{profile.name||"Grappler"}</h1>
-        {training&&<p style={{margin:"4px 0 0",fontSize:12,color:"#555"}}>{training} on the mat{profile.gameStyle?` · ${profile.gameStyle}`:""}</p>}
+        <p style={{margin:"0 0 2px",fontSize:12,color:"var(--t3)",fontWeight:500,textTransform:"uppercase",letterSpacing:"1px"}}>{getGreeting()}{profile.gym?` · ${profile.gym}`:""}</p>
+        <h1 style={{margin:0,fontSize:30,fontWeight:800,color:"var(--t1)",letterSpacing:"-0.5px"}}>{profile.name||"Grappler"}</h1>
+        {training&&<p style={{margin:"4px 0 0",fontSize:12,color:"var(--t3)"}}>{training} on the mat{profile.gameStyle?` · ${profile.gameStyle}`:""}</p>}
       </div>
 
       {/* STREAK HERO */}
@@ -331,9 +342,9 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
         </div>
       ):(
         <div style={{...card,textAlign:"center",padding:"20px",marginBottom:12,borderStyle:"dashed"}}>
-          <i className="ti ti-flame" style={{fontSize:28,color:"#555",display:"block",marginBottom:4}}/>
-          <p style={{margin:"0 0 4px",fontSize:15,fontWeight:600,color:"#fff"}}>Start your streak today</p>
-          <p style={{margin:0,fontSize:13,color:"#555"}}>Log a session to begin your journey</p>
+          <i className="ti ti-flame" style={{fontSize:28,color:"var(--t3)",display:"block",marginBottom:4}}/>
+          <p style={{margin:"0 0 4px",fontSize:15,fontWeight:600,color:"var(--t1)"}}>Start your streak today</p>
+          <p style={{margin:0,fontSize:13,color:"var(--t3)"}}>Log a session to begin your journey</p>
         </div>
       )}
 
@@ -342,32 +353,32 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             <div style={{width:10,height:10,borderRadius:"50%",background:beltObj.color,boxShadow:`0 0 8px ${beltObj.color}`}}/>
-            <span style={{fontSize:13,color:"#fff",fontWeight:600}}>{beltObj.label} Belt{profile.stripes>0?` · ${profile.stripes} stripe${profile.stripes>1?"s":""}`:""}</span>
+            <span style={{fontSize:13,color:"var(--t1)",fontWeight:600}}>{beltObj.label} Belt{profile.stripes>0?` · ${profile.stripes} stripe${profile.stripes>1?"s":""}`:""}</span>
           </div>
-          <span style={{fontSize:11,color:"#555"}}>{xp} / {xpToNext} XP</span>
+          <span style={{fontSize:11,color:"var(--t3)"}}>{xp} / {xpToNext} XP</span>
         </div>
-        <div style={{height:6,background:"#2C2C2E",borderRadius:3,overflow:"hidden",marginBottom:6}}>
+        <div style={{height:6,background:"var(--surface)",borderRadius:3,overflow:"hidden",marginBottom:6}}>
           <div style={{width:`${xpPct}%`,height:"100%",background:`linear-gradient(90deg,${LIME},#88CC00)`,borderRadius:3,transition:"width 1s ease"}}/>
         </div>
-        <p style={{margin:0,fontSize:11,color:"#555"}}>{xpPct}% to {nextBelt?.label} · +50 XP/session · +10 XP/sub</p>
+        <p style={{margin:0,fontSize:11,color:"var(--t3)"}}>{xpPct}% to {nextBelt?.label} · +50 XP/session · +10 XP/sub</p>
       </div>
 
       {/* Weekly Challenge */}
       <div style={{...card,marginBottom:12,borderLeft:`3px solid ${challengeDone?POS:LIME}`}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
           <p style={{margin:0,fontSize:11,fontWeight:700,color:challengeDone?POS:LIME,textTransform:"uppercase",letterSpacing:"0.8px"}}>{challengeDone?"Challenge complete!":"Weekly challenge"}</p>
-          <span style={{fontSize:12,color:"#555"}}>{challengeProgress.current}/{challengeProgress.target}</span>
+          <span style={{fontSize:12,color:"var(--t3)"}}>{challengeProgress.current}/{challengeProgress.target}</span>
         </div>
-        <p style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:"#fff"}}>{challenge.title}</p>
-        <p style={{margin:"0 0 10px",fontSize:12,color:"#8E8E93"}}>{challenge.desc}</p>
-        <div style={{height:5,background:"#2C2C2E",borderRadius:3}}>
+        <p style={{margin:"0 0 4px",fontSize:15,fontWeight:700,color:"var(--t1)"}}>{challenge.title}</p>
+        <p style={{margin:"0 0 10px",fontSize:12,color:"var(--t2)"}}>{challenge.desc}</p>
+        <div style={{height:5,background:"var(--surface)",borderRadius:3}}>
           <div style={{width:`${challengePct}%`,height:"100%",background:challengeDone?POS:LIME,borderRadius:3,transition:"width 0.5s ease"}}/>
         </div>
       </div>
 
       {/* Quick Log + Full Log */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:8,marginBottom:12}}>
-        <button onClick={onQuickLog} className="tap" style={{padding:"16px 8px",borderRadius:18,background:"#1C1C1E",border:"0.5px solid #2A2A2C",cursor:"pointer",fontFamily:"inherit",color:"#fff",fontWeight:600,fontSize:14,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+        <button onClick={onQuickLog} className="tap" style={{padding:"16px 8px",borderRadius:18,background:"var(--card)",border:"0.5px solid var(--border-sub)",cursor:"pointer",fontFamily:"inherit",color:"var(--t1)",fontWeight:600,fontSize:14,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
           <i className="ti ti-bolt" style={{fontSize:22,color:LIME}}/>
           <span>Quick Log</span>
         </button>
@@ -378,8 +389,8 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
         {[{l:"Hours",v:Math.floor(totalMins/60)},{l:"Sessions",v:sessions.length},{l:"This week",v:wkSessions.length,u:`/${wkGoal}`},{l:"Consistency",v:consistency,u:"%"}].map(m=>(
           <div key={m.l} style={{...mc,textAlign:"center"}}>
-            <p style={{margin:0,fontSize:20,fontWeight:800,color:"#fff"}}>{m.v}<span style={{fontSize:10,color:"#555"}}>{m.u||""}</span></p>
-            <p style={{margin:"3px 0 0",fontSize:10,color:"#555",fontWeight:500}}>{m.l}</p>
+            <p style={{margin:0,fontSize:20,fontWeight:800,color:"var(--t1)"}}>{m.v}<span style={{fontSize:10,color:"var(--t3)"}}>{m.u||""}</span></p>
+            <p style={{margin:"3px 0 0",fontSize:10,color:"var(--t3)",fontWeight:500}}>{m.l}</p>
           </div>
         ))}
       </div>
@@ -387,35 +398,35 @@ const Dashboard=memo(function Dashboard({sessions,journal,profile,onLog,onQuickL
       {/* Weekly dots */}
       <div style={{...card,marginBottom:12}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-          <p style={{margin:0,fontSize:14,fontWeight:600,color:"#fff"}}>This week</p>
-          <p style={{margin:0,fontSize:13,color:"#555"}}><span style={{color:"#fff",fontWeight:700}}>{wkSessions.length}</span> / {wkGoal}</p>
+          <p style={{margin:0,fontSize:14,fontWeight:600,color:"var(--t1)"}}>This week</p>
+          <p style={{margin:0,fontSize:13,color:"var(--t3)"}}><span style={{color:"var(--t1)",fontWeight:700}}>{wkSessions.length}</span> / {wkGoal}</p>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
           {weeklyDots.map((d,i)=>(
             <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-              <div style={{width:34,height:34,borderRadius:"50%",background:d.active?LIME:"#2C2C2E",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:d.active?`0 0 14px ${LIME}50`:"none",transition:"all 0.3s"}}>
+              <div style={{width:34,height:34,borderRadius:"50%",background:d.active?LIME:"var(--surface)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:d.active?`0 0 14px ${LIME}50`:"none",transition:"all 0.3s"}}>
                 {d.active&&<i className="ti ti-check" style={{fontSize:14,color:LIME_DK}}/>}
               </div>
               <span style={{fontSize:10,color:d.active?"#fff":"#444"}}>{d.day}</span>
             </div>
           ))}
         </div>
-        <div style={{height:4,background:"#2C2C2E",borderRadius:2}}><div style={{width:`${Math.min(100,wkSessions.length/wkGoal*100)}%`,height:"100%",background:LIME,borderRadius:2,transition:"width 0.5s"}}/></div>
+        <div style={{height:4,background:"var(--surface)",borderRadius:2}}><div style={{width:`${Math.min(100,wkSessions.length/wkGoal*100)}%`,height:"100%",background:LIME,borderRadius:2,transition:"width 0.5s"}}/></div>
       </div>
 
       {/* Journal CTA */}
-      <button onClick={onJournal} className="tap" style={{width:"100%",padding:"15px 18px",borderRadius:16,background:"#1C1C1E",color:"#fff",border:"0.5px solid #2A2A2C",fontWeight:500,fontSize:15,cursor:"pointer",fontFamily:"inherit",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <button onClick={onJournal} className="tap" style={{width:"100%",padding:"15px 18px",borderRadius:16,background:"var(--card)",color:"var(--t1)",border:"0.5px solid var(--border-sub)",fontWeight:500,fontSize:15,cursor:"pointer",fontFamily:"inherit",textAlign:"left",display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
         <span>Debrief today's session</span>
-        <span style={{color:"#555",fontSize:18}}>›</span>
+        <span style={{color:"var(--t3)",fontSize:18}}>›</span>
       </button>
 
       {/* Recent sessions */}
       <SH>Recent sessions</SH>
       {sessions.length===0?(
-        <div style={{textAlign:"center",padding:"48px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}>
-          <i className="ti ti-tournament" style={{fontSize:44,color:"#555",display:"block",marginBottom:8}}/>
-          <p style={{margin:"0 0 4px",fontSize:16,color:"#fff",fontWeight:600}}>No sessions yet</p>
-          <p style={{margin:"0 0 20px",fontSize:13,color:"#555"}}>Every black belt started here</p>
+        <div style={{textAlign:"center",padding:"48px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}>
+          <i className="ti ti-tournament" style={{fontSize:44,color:"var(--t3)",display:"block",marginBottom:8}}/>
+          <p style={{margin:"0 0 4px",fontSize:16,color:"var(--t1)",fontWeight:600}}>No sessions yet</p>
+          <p style={{margin:"0 0 20px",fontSize:13,color:"var(--t3)"}}>Every black belt started here</p>
           <button onClick={onLog} style={{padding:"12px 28px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontWeight:700,fontSize:14,fontFamily:"inherit"}}>Log your first session →</button>
         </div>
       ):sessions.slice(0,3).map(s=><SCard key={s.id} s={s}/>)}
@@ -432,8 +443,8 @@ const Sessions=memo(function Sessions({sessions,onDelete,onEdit,onSelectSession}
   return(<div className="fade-in">
     <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search partner or notes..." style={{marginBottom:10}}/>
     <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:6}}>{["All",...SESSION_TYPES].map(t=><Pill key={t} active={typeFilter===t} onClick={()=>setTypeFilter(t)} s={{fontSize:12,padding:"7px 14px",flexShrink:0}}>{t}</Pill>)}</div>
-    <p style={{margin:"0 0 12px",fontSize:13,color:"#555"}}>{displayed.length} of {sessions.length} sessions</p>
-    {displayed.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>{search||typeFilter!=="All"?"No sessions match your filter":"No sessions logged yet"}</p></div>}
+    <p style={{margin:"0 0 12px",fontSize:13,color:"var(--t3)"}}>{displayed.length} of {sessions.length} sessions</p>
+    {displayed.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"var(--t3)"}}>{search||typeFilter!=="All"?"No sessions match your filter":"No sessions logged yet"}</p></div>}
     {displayed.map(s=><div key={s.id} onClick={()=>onSelectSession(s)} style={{cursor:"pointer"}}><SCard s={s} onDelete={onDelete} onEdit={onEdit}/></div>)}
   </div>);
 });
@@ -441,18 +452,18 @@ const Sessions=memo(function Sessions({sessions,onDelete,onEdit,onSelectSession}
 //  JOURNAL 
 const Journal=memo(function Journal({journal,onAdd}){return(<div className="fade-in">
   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-    <p style={{margin:0,fontSize:13,color:"#555"}}>{journal.length} entries</p>
+    <p style={{margin:0,fontSize:13,color:"var(--t3)"}}>{journal.length} entries</p>
     <button onClick={onAdd} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ New entry</button>
   </div>
-  {journal.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><i className="ti ti-notebook" style={{fontSize:32,color:"#555",display:"block",marginBottom:8}}/><p style={{margin:"0 0 4px",fontSize:15,color:"#fff",fontWeight:600}}>Your journal is empty</p><p style={{margin:0,fontSize:13,color:"#555"}}>After a session, write a quick debrief. It compounds.</p></div>}
+  {journal.length===0&&<div style={{textAlign:"center",padding:"60px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><i className="ti ti-notebook" style={{fontSize:32,color:"var(--t3)",display:"block",marginBottom:8}}/><p style={{margin:"0 0 4px",fontSize:15,color:"var(--t1)",fontWeight:600}}>Your journal is empty</p><p style={{margin:0,fontSize:13,color:"var(--t3)"}}>After a session, write a quick debrief. It compounds.</p></div>}
   {journal.map(e=>(<div key={e.id} style={card}>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-      <span style={{fontSize:13,fontWeight:500,color:"#fff"}}>{e.date}</span>
+      <span style={{fontSize:13,fontWeight:500,color:"var(--t1)"}}>{e.date}</span>
       <span style={{fontSize:12,padding:"4px 12px",borderRadius:50,background:MOOD_C[e.mood]+"1A",color:MOOD_C[e.mood],fontWeight:500}}>{e.mood}</span>
     </div>
-    {e.worked&&<div style={{marginBottom:10,paddingLeft:12,borderLeft:"3px solid #1D9E75"}}><p style={{margin:"0 0 2px",fontSize:11,color:"#1D9E75",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>What worked</p><p style={{margin:0,fontSize:14,lineHeight:1.5,color:"#fff"}}>{e.worked}</p></div>}
-    {e.gotMe&&<div style={{marginBottom:10,paddingLeft:12,borderLeft:"3px solid #E24B4A"}}><p style={{margin:"0 0 2px",fontSize:11,color:"#E24B4A",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>What got me</p><p style={{margin:0,fontSize:14,lineHeight:1.5,color:"#fff"}}>{e.gotMe}</p></div>}
-    {e.focus&&<div style={{paddingLeft:12,borderLeft:"3px solid #EF9F27"}}><p style={{margin:"0 0 2px",fontSize:11,color:"#EF9F27",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Focus next time</p><p style={{margin:0,fontSize:14,lineHeight:1.5,color:"#fff"}}>{e.focus}</p></div>}
+    {e.worked&&<div style={{marginBottom:10,paddingLeft:12,borderLeft:"3px solid #1D9E75"}}><p style={{margin:"0 0 2px",fontSize:11,color:"#1D9E75",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>What worked</p><p style={{margin:0,fontSize:14,lineHeight:1.5,color:"var(--t1)"}}>{e.worked}</p></div>}
+    {e.gotMe&&<div style={{marginBottom:10,paddingLeft:12,borderLeft:"3px solid #E24B4A"}}><p style={{margin:"0 0 2px",fontSize:11,color:"#E24B4A",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>What got me</p><p style={{margin:0,fontSize:14,lineHeight:1.5,color:"var(--t1)"}}>{e.gotMe}</p></div>}
+    {e.focus&&<div style={{paddingLeft:12,borderLeft:"3px solid #EF9F27"}}><p style={{margin:"0 0 2px",fontSize:11,color:"#EF9F27",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Focus next time</p><p style={{margin:0,fontSize:14,lineHeight:1.5,color:"var(--t1)"}}>{e.focus}</p></div>}
   </div>))}
 </div>);});
 
@@ -481,17 +492,17 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
 
   // Full-page comp detail view
   if(selComp){const medals=getMedals(selComp);return(<div className="fade-in">
-    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><button onClick={()=>setSelComp(null)} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selComp.event}</h2></div>
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><button onClick={()=>setSelComp(null)} style={{width:44,height:44,borderRadius:"50%",background:"var(--card)",border:"none",cursor:"pointer",color:"var(--t1)",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"var(--t1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selComp.event}</h2></div>
     {selComp.photo&&<img src={selComp.photo} style={{width:"100%",borderRadius:14,maxHeight:220,objectFit:"cover",marginBottom:16}}/>}
-    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>{selComp.date&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.date}</span>}{selComp.location&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.location}</span>}{selComp.ageBracket&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.ageBracket}</span>}{selComp.compBelt&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.compBelt} Belt</span>}{selComp.weight&&<span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selComp.weight}</span>}</div>
+    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>{selComp.date&&<span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selComp.date}</span>}{selComp.location&&<span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selComp.location}</span>}{selComp.ageBracket&&<span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selComp.ageBracket}</span>}{selComp.compBelt&&<span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selComp.compBelt} Belt</span>}{selComp.weight&&<span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selComp.weight}</span>}</div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-      <div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:POS}}>{selComp.wins||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Wins</p></div>
-      <div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selComp.losses||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Losses</p></div>
+      <div style={{background:"var(--surface)",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:POS}}>{selComp.wins||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"var(--t3)"}}>Wins</p></div>
+      <div style={{background:"var(--surface)",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selComp.losses||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"var(--t3)"}}>Losses</p></div>
     </div>
-    {selComp.joinedGi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.giAbsMedal||"None"}</span></div></div></div></div>}
-    {selComp.joinedNogi&&<div style={{background:"#2C2C2E",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"#fff"}}>No-Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiWeightMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"#555"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiAbsMedal||"None"]}}/><span style={{fontSize:13,color:"#fff"}}>{selComp.nogiAbsMedal||"None"}</span></div></div></div></div>}
-    {medals.length>0&&<div style={{...card,marginBottom:0}}><SH>Medals</SH><div style={{display:"flex",gap:12,flexWrap:"wrap"}}>{medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:12,height:12,borderRadius:"50%",background:MEDAL_COLORS[m.medal]}}/><span style={{fontSize:13,color:"#fff"}}>{m.label}: {m.medal}</span></div>)}</div></div>}
-    {selComp.notes&&<div style={{...card}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selComp.notes}</p></div>}
+    {selComp.joinedGi&&<div style={{background:"var(--surface)",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"var(--t1)"}}>Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"var(--t3)"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giWeightMedal||"None"]}}/><span style={{fontSize:13,color:"var(--t1)"}}>{selComp.giWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"var(--t3)"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.giAbsMedal||"None"]}}/><span style={{fontSize:13,color:"var(--t1)"}}>{selComp.giAbsMedal||"None"}</span></div></div></div></div>}
+    {selComp.joinedNogi&&<div style={{background:"var(--surface)",borderRadius:14,padding:"14px 16px",marginBottom:10}}><p style={{margin:"0 0 10px",fontSize:13,fontWeight:600,color:"var(--t1)"}}>No-Gi</p><div style={{display:"flex",gap:24}}><div><p style={{margin:"0 0 4px",fontSize:11,color:"var(--t3)"}}>Weight</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiWeightMedal||"None"]}}/><span style={{fontSize:13,color:"var(--t1)"}}>{selComp.nogiWeightMedal||"None"}</span></div></div><div><p style={{margin:"0 0 4px",fontSize:11,color:"var(--t3)"}}>Absolute</p><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:14,borderRadius:"50%",background:MEDAL_COLORS[selComp.nogiAbsMedal||"None"]}}/><span style={{fontSize:13,color:"var(--t1)"}}>{selComp.nogiAbsMedal||"None"}</span></div></div></div></div>}
+    {medals.length>0&&<div style={{...card,marginBottom:0}}><SH>Medals</SH><div style={{display:"flex",gap:12,flexWrap:"wrap"}}>{medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:12,height:12,borderRadius:"50%",background:MEDAL_COLORS[m.medal]}}/><span style={{fontSize:13,color:"var(--t1)"}}>{m.label}: {m.medal}</span></div>)}</div></div>}
+    {selComp.notes&&<div style={{...card}}><p style={{margin:"0 0 4px",fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"var(--t1)",lineHeight:1.6}}>{selComp.notes}</p></div>}
     {selComp.weightTarget&&(()=>{
       const wis=(selComp.weighIns||[]).sort((a,b)=>b.date.localeCompare(a.date));
       const latest=wis[0];
@@ -500,22 +511,22 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
       const daysOut=Math.ceil((new Date(selComp.date)-new Date())/86400000);
       return(<div style={{...card,marginBottom:10}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-          <p style={{margin:0,fontSize:14,fontWeight:700,color:"#fff"}}>Weight Cut</p>
-          <span style={{fontSize:12,padding:"3px 12px",borderRadius:50,background:madeWeight?POS+"20":"#2C2C2E",color:madeWeight?POS:"#8E8E93",fontWeight:600}}>Target: {selComp.weightTarget} kg</span>
+          <p style={{margin:0,fontSize:14,fontWeight:700,color:"var(--t1)"}}>Weight Cut</p>
+          <span style={{fontSize:12,padding:"3px 12px",borderRadius:50,background:madeWeight?POS+"20":"var(--surface)",color:madeWeight?POS:"#8E8E93",fontWeight:600}}>Target: {selComp.weightTarget} kg</span>
         </div>
         <div style={{textAlign:"center",marginBottom:wis.length>0?16:12}}>
           <p style={{margin:0,fontSize:52,fontWeight:800,letterSpacing:"-2px",color:madeWeight?POS:"#fff",lineHeight:1}}>{latest?latest.weight:"—"}</p>
-          <p style={{margin:"3px 0 0",fontSize:12,color:"#555"}}>{latest?"kg":"No weigh-ins logged yet"}</p>
+          <p style={{margin:"3px 0 0",fontSize:12,color:"var(--t3)"}}>{latest?"kg":"No weigh-ins logged yet"}</p>
           {latest&&<p style={{margin:"10px 0 0",fontSize:13,fontWeight:600,color:madeWeight?POS:"#8E8E93"}}>
             {madeWeight?"Made weight!":toGo+" kg to cut"}
             {daysOut>0?" · "+daysOut+" day"+(daysOut!==1?"s":"")+" out":daysOut===0?" · Competition day!":""}
           </p>}
         </div>
         {wis.length>0&&<div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4,marginBottom:14,WebkitOverflowScrolling:"touch"}}>
-          {wis.map(wi=><div key={wi.id} style={{flexShrink:0,background:"#2C2C2E",borderRadius:12,padding:"10px 14px",textAlign:"center",minWidth:68}}>
-            <p style={{margin:0,fontSize:15,fontWeight:700,color:"#fff"}}>{wi.weight}<span style={{fontSize:10,color:"#555"}}> kg</span></p>
-            <p style={{margin:"3px 0 6px",fontSize:10,color:"#555"}}>{wi.date.slice(5).replace("-","/")}</p>
-            <button onClick={()=>deleteWeighIn(wi.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#444",padding:0,minHeight:22,minWidth:22}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
+          {wis.map(wi=><div key={wi.id} style={{flexShrink:0,background:"var(--surface)",borderRadius:12,padding:"10px 14px",textAlign:"center",minWidth:68}}>
+            <p style={{margin:0,fontSize:15,fontWeight:700,color:"var(--t1)"}}>{wi.weight}<span style={{fontSize:10,color:"var(--t3)"}}> kg</span></p>
+            <p style={{margin:"3px 0 6px",fontSize:10,color:"var(--t3)"}}>{wi.date.slice(5).replace("-","/")}</p>
+            <button onClick={()=>deleteWeighIn(wi.id)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t4)",padding:0,minHeight:22,minWidth:22}}><i className="ti ti-trash" style={{fontSize:11}}/></button>
           </div>)}
         </div>}
         {showWIForm?<div>
@@ -524,17 +535,17 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
             <div><Lbl>Weight (kg)</Lbl><input type="number" step="0.1" min="30" max="200" value={wiWeight} onChange={e=>setWiWeight(e.target.value)} placeholder="74.5"/></div>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>setShowWIForm(false)} style={{flex:1,padding:"13px",borderRadius:12,background:"#2C2C2E",color:"#8E8E93",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14,minHeight:44}}>Cancel</button>
-            <button onClick={addWeighIn} disabled={!wiWeight} style={{flex:2,padding:"13px",borderRadius:12,background:wiWeight?LIME:"#2C2C2E",color:wiWeight?LIME_DK:"#555",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14,minHeight:44}}>Save</button>
+            <button onClick={()=>setShowWIForm(false)} style={{flex:1,padding:"13px",borderRadius:12,background:"var(--surface)",color:"var(--t2)",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14,minHeight:44}}>Cancel</button>
+            <button onClick={addWeighIn} disabled={!wiWeight} style={{flex:2,padding:"13px",borderRadius:12,background:wiWeight?LIME:"var(--surface)",color:wiWeight?LIME_DK:"#555",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:14,minHeight:44}}>Save</button>
           </div>
         </div>
-        :<button onClick={()=>setShowWIForm(true)} style={{width:"100%",padding:"13px",borderRadius:12,background:"#2C2C2E",color:"#8E8E93",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:6,minHeight:44}}>
+        :<button onClick={()=>setShowWIForm(true)} style={{width:"100%",padding:"13px",borderRadius:12,background:"var(--surface)",color:"var(--t2)",border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:6,minHeight:44}}>
           <i className="ti ti-scale" style={{fontSize:15}}/>Log weigh-in
         </button>}
       </div>);
     })()}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8,marginBottom:20}}>
-      <button onClick={()=>{onEditComp(selComp);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#2C2C2E",color:"#fff",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Edit</button>
+      <button onClick={()=>{onEditComp(selComp);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"var(--surface)",color:"var(--t1)",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Edit</button>
       <button onClick={()=>{deleteComp(selComp.id);setSelComp(null);}} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button>
     </div>
   </div>);}
@@ -543,26 +554,26 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
     <SegCtrl opts={[["stats","Stats"],["insights","Insights"],["comp","Comp"],["goals","Goals"]]} value={sub} onChange={setSub}/>
     {sub==="stats"&&<div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-        {[{l:"Subs landed",v:totals.given,c:POS},{l:"Times tapped",v:totals.received,c:"#E24B4A"},{l:"Mat hours",v:Math.floor(totals.mins/60),c:"#fff"}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:26,fontWeight:800,color:m.c}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>))}
+        {[{l:"Subs landed",v:totals.given,c:POS},{l:"Times tapped",v:totals.received,c:"#E24B4A"},{l:"Mat hours",v:Math.floor(totals.mins/60),c:"#fff"}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:26,fontWeight:800,color:m.c}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"var(--t3)",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>))}
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-        {[{l:"Best week",v:`${pbs.bestWeek} sessions`},{l:"Best session",v:`${pbs.bestSubs} subs`}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:LIME}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555"}}>{m.l}</p></div>))}
+        {[{l:"Best week",v:`${pbs.bestWeek} sessions`},{l:"Best session",v:`${pbs.bestSubs} subs`}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:LIME}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"var(--t3)"}}>{m.l}</p></div>))}
       </div>
-      <div style={card}><p style={{margin:"0 0 14px",fontSize:14,fontWeight:600,color:"#fff"}}>Weekly mat time</p><div style={{height:160}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weeklyData} margin={{top:0,right:4,bottom:0,left:-28}}><XAxis dataKey="week" tick={{fontSize:10,fill:"#555"}}/><YAxis tick={{fontSize:10,fill:"#555"}}/><Tooltip contentStyle={tt} formatter={v=>`${v} hrs`}/><Bar dataKey="hours" fill={LIME} radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div></div>
+      <div style={card}><p style={{margin:"0 0 14px",fontSize:14,fontWeight:600,color:"var(--t1)"}}>Weekly mat time</p><div style={{height:160}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weeklyData} margin={{top:0,right:4,bottom:0,left:-28}}><XAxis dataKey="week" tick={{fontSize:10,fill:"#555"}}/><YAxis tick={{fontSize:10,fill:"#555"}}/><Tooltip contentStyle={tt} formatter={v=>`${v} hrs`}/><Bar dataKey="hours" fill={LIME} radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div></div>
     </div>}
     {sub==="insights"&&<div>
       {/* Summary strip */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-        {[{l:"Avg subs/session",v:summaryStats.avgSubs,c:POS},{l:"Top partner",v:summaryStats.topPartner,c:"#fff",small:true},{l:"Active weeks",v:`${summaryStats.activeWeeks}/16`,c:LIME}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:m.small?13:22,fontWeight:m.small?600:800,color:m.c,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px",lineHeight:1.2}}>{m.l}</p></div>))}
+        {[{l:"Avg subs/session",v:summaryStats.avgSubs,c:POS},{l:"Top partner",v:summaryStats.topPartner,c:"#fff",small:true},{l:"Active weeks",v:`${summaryStats.activeWeeks}/16`,c:LIME}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:m.small?13:22,fontWeight:m.small?600:800,color:m.c,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"var(--t3)",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px",lineHeight:1.2}}>{m.l}</p></div>))}
       </div>
       {/* Heatmap hero */}
       <SH>Training heatmap</SH>
       <div style={{...card,paddingRight:12}}>
-        <p style={{margin:"0 0 12px",fontSize:12,color:"#555",lineHeight:1.4}}>Each square is one day. <span style={{color:LIME}}>Brighter</span> = more mat time.</p>
+        <p style={{margin:"0 0 12px",fontSize:12,color:"var(--t3)",lineHeight:1.4}}>Each square is one day. <span style={{color:LIME}}>Brighter</span> = more mat time.</p>
         <div style={{display:"flex",gap:2}}>
           {/* Day labels column */}
           <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4,paddingTop:16}}>
-            {["S","M","T","W","T","F","S"].map((d,i)=><div key={i} style={{height:16,fontSize:9,color:"#444",lineHeight:"16px",width:10}}>{[1,3,5].includes(i)?d:""}</div>)}
+            {["S","M","T","W","T","F","S"].map((d,i)=><div key={i} style={{height:16,fontSize:9,color:"var(--t4)",lineHeight:"16px",width:10}}>{[1,3,5].includes(i)?d:""}</div>)}
           </div>
           {/* Grid with month labels */}
           <div style={{display:"flex",gap:2,flex:1,overflowX:"auto"}}>
@@ -570,22 +581,22 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
               <div key={wi} style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
                 <div style={{height:14,fontSize:9,color:"#666",lineHeight:"14px",whiteSpace:"nowrap"}}>{week[0]?.monthLabel||""}</div>
                 {week.map((day,di)=>(
-                  <div key={di} style={{width:16,height:16,borderRadius:3,background:day.mins===0?"#2C2C2E":day.mins<60?LIME+"55":day.mins<120?LIME+"99":LIME,flexShrink:0}}/>
+                  <div key={di} style={{width:16,height:16,borderRadius:3,background:day.mins===0?"var(--surface)":day.mins<60?LIME+"55":day.mins<120?LIME+"99":LIME,flexShrink:0}}/>
                 ))}
               </div>
             ))}
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:6,marginTop:10,justifyContent:"flex-end"}}>
-          <span style={{fontSize:10,color:"#555"}}>Less</span>
-          {["#2C2C2E",LIME+"55",LIME+"99",LIME].map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:2,background:c}}/>)}
-          <span style={{fontSize:10,color:"#555"}}>More</span>
+          <span style={{fontSize:10,color:"var(--t3)"}}>Less</span>
+          {["var(--surface)",LIME+"55",LIME+"99",LIME].map((c,i)=><div key={i} style={{width:10,height:10,borderRadius:2,background:c}}/>)}
+          <span style={{fontSize:10,color:"var(--t3)"}}>More</span>
         </div>
       </div>
       {/* Weekly submissions chart */}
       <SH>Weekly submissions</SH>
       <div style={card}>
-        {weeklySubsData.every(w=>w.subs===0&&w.tapped===0)?<p style={{margin:0,fontSize:13,color:"#555",textAlign:"center",padding:"20px 0"}}>No sessions logged yet</p>:<>
+        {weeklySubsData.every(w=>w.subs===0&&w.tapped===0)?<p style={{margin:0,fontSize:13,color:"var(--t3)",textAlign:"center",padding:"20px 0"}}>No sessions logged yet</p>:<>
           <div style={{height:150}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weeklySubsData} margin={{top:0,right:4,bottom:0,left:-28}} barGap={2} barCategoryGap="30%"><XAxis dataKey="week" tick={{fontSize:9,fill:"#555"}} interval="preserveStartEnd"/><YAxis tick={{fontSize:10,fill:"#555"}} allowDecimals={false}/><Tooltip contentStyle={tt} formatter={(v,n)=>[v,n==="subs"?"Subs landed":"Times tapped"]}/><Bar dataKey="subs" fill={POS} radius={[4,4,0,0]} name="subs"/><Bar dataKey="tapped" fill="#E24B4A" radius={[4,4,0,0]} name="tapped"/></BarChart></ResponsiveContainer></div>
           <div style={{display:"flex",gap:16,marginTop:10,justifyContent:"center"}}><span style={{fontSize:11,color:POS,display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:POS,display:"inline-block"}}/> Subs landed</span><span style={{fontSize:11,color:"#E24B4A",display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:"#E24B4A",display:"inline-block"}}/> Times tapped</span></div>
         </>}
@@ -593,9 +604,9 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
       {/* Partner breakdown */}
       <SH>Partner breakdown</SH>
       {partnerStats.length===0?
-        <div style={{textAlign:"center",padding:"36px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}>
-          <i className="ti ti-users" style={{fontSize:28,color:"#555",display:"block",marginBottom:8}}/>
-          <p style={{margin:0,fontSize:14,color:"#555"}}>Log sessions with a partner name to see stats</p>
+        <div style={{textAlign:"center",padding:"36px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}>
+          <i className="ti ti-users" style={{fontSize:28,color:"var(--t3)",display:"block",marginBottom:8}}/>
+          <p style={{margin:0,fontSize:14,color:"var(--t3)"}}>Log sessions with a partner name to see stats</p>
         </div>
       :partnerStats.map(p=>{
         const total=p.subs+p.tapped;
@@ -604,25 +615,25 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
         const verdictColor=subPct>=60?POS:subPct>=40?LIME:"#E24B4A";
         return(<div key={p.name} style={card}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-            <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{p.name}</p>
+            <p style={{margin:0,fontSize:15,fontWeight:600,color:"var(--t1)"}}>{p.name}</p>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               {total>0&&<span style={{fontSize:11,fontWeight:700,color:verdictColor,background:verdictColor+"20",padding:"3px 10px",borderRadius:50}}>{verdict}</span>}
-              <span style={{fontSize:12,color:"#555"}}>{p.count} session{p.count!==1?"s":""}</span>
+              <span style={{fontSize:12,color:"var(--t3)"}}>{p.count} session{p.count!==1?"s":""}</span>
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:POS}}>{p.subs}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Subs</p></div>
-            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:"#E24B4A"}}>{p.tapped}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Tapped</p></div>
-            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:total>0?verdictColor:"#555"}}>{total>0?`${subPct}%`:"—"}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Sub%</p></div>
+            <div style={{textAlign:"center",background:"var(--surface)",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:POS}}>{p.subs}</p><p style={{margin:"3px 0 0",fontSize:10,color:"var(--t3)"}}>Subs</p></div>
+            <div style={{textAlign:"center",background:"var(--surface)",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:"#E24B4A"}}>{p.tapped}</p><p style={{margin:"3px 0 0",fontSize:10,color:"var(--t3)"}}>Tapped</p></div>
+            <div style={{textAlign:"center",background:"var(--surface)",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:total>0?verdictColor:"#555"}}>{total>0?`${subPct}%`:"—"}</p><p style={{margin:"3px 0 0",fontSize:10,color:"var(--t3)"}}>Sub%</p></div>
           </div>
         </div>);})}
     </div>}
     {sub==="comp"&&<div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
-        {[{l:"Win rate",v:`${compStats.rate}%`,c:compStats.rate>=50?POS:"#E24B4A"},{l:"Wins",v:compStats.wins,c:POS},{l:"Losses",v:compStats.losses,c:"#E24B4A"}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:26,fontWeight:800,color:m.c}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>))}
+        {[{l:"Win rate",v:`${compStats.rate}%`,c:compStats.rate>=50?POS:"#E24B4A"},{l:"Wins",v:compStats.wins,c:POS},{l:"Losses",v:compStats.losses,c:"#E24B4A"}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:26,fontWeight:800,color:m.c}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"var(--t3)",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>))}
       </div>
       <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}><button onClick={onAddComp} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add event</button></div>
-      {competitions.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>No competitions logged yet</p></div>}
+      {competitions.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"var(--t3)"}}>No competitions logged yet</p></div>}
       {competitions.map(comp=>{const medals=getMedals(comp);return(<div key={comp.id} className="tap" style={card} onClick={()=>setSelComp(comp)}>
         <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
           <div style={{width:46,height:46,borderRadius:14,background:"#E24B4A18",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid #E24B4A20"}}>
@@ -631,27 +642,27 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-              <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{comp.event}</p>
+              <p style={{margin:0,fontSize:15,fontWeight:600,color:"var(--t1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{comp.event}</p>
               <div style={{display:"flex",gap:2,flexShrink:0,marginLeft:8}}>
-                <button onClick={e=>{e.stopPropagation();onEditComp(comp);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>
-                <button onClick={e=>{e.stopPropagation();deleteComp(comp.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>
+                <button onClick={e=>{e.stopPropagation();onEditComp(comp);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"var(--t3)",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>
+                <button onClick={e=>{e.stopPropagation();deleteComp(comp.id);}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"var(--t3)",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>
               </div>
             </div>
-            <p style={{margin:"0 0 6px",fontSize:12,color:"#555"}}>{comp.date}{comp.location?" · "+comp.location:""}</p>
+            <p style={{margin:"0 0 6px",fontSize:12,color:"var(--t3)"}}>{comp.date}{comp.location?" · "+comp.location:""}</p>
             <div style={{display:"flex",gap:10,alignItems:"center"}}>
               <span style={{fontSize:12,color:POS,fontWeight:600}}>{comp.wins||0}W</span>
               <span style={{fontSize:12,color:"#E24B4A"}}>{comp.losses||0}L</span>
-              {medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:3}}><div style={{width:8,height:8,borderRadius:"50%",background:MEDAL_COLORS[m.medal],flexShrink:0}}/><span style={{fontSize:10,color:"#8E8E93"}}>{m.label}</span></div>)}
+              {medals.map((m,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:3}}><div style={{width:8,height:8,borderRadius:"50%",background:MEDAL_COLORS[m.medal],flexShrink:0}}/><span style={{fontSize:10,color:"var(--t2)"}}>{m.label}</span></div>)}
             </div>
           </div>
         </div>
       </div>);})}
     </div>}
     {sub==="goals"&&<div>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><p style={{margin:0,fontSize:13,color:"#555"}}>{goals.filter(g=>!g.done).length} active</p><button onClick={onAddGoal} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add goal</button></div>
-      {goals.filter(g=>!g.done).length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}><p style={{margin:0,fontSize:15,color:"#555"}}>No active goals. Set one to stay focused.</p></div>}
-      {goals.filter(g=>!g.done).map(g=>(<div key={g.id} style={card}><div style={{display:"flex",alignItems:"center",gap:12}}><button onClick={()=>toggleGoal(g.id)} style={{width:44,height:44,borderRadius:"50%",border:"2px solid #3A3A3C",background:"transparent",cursor:"pointer",flexShrink:0}}/><div style={{flex:1}}><p style={{margin:"0 0 5px",fontSize:14,fontWeight:500,color:"#fff"}}>{g.title}</p><div style={{display:"flex",gap:8}}><span style={{fontSize:11,padding:"2px 8px",borderRadius:50,background:LIME_DIM,color:LIME_TXT,fontWeight:700}}>{g.cat}</span>{g.deadline&&<span style={{fontSize:11,color:"#555"}}>Due {g.deadline}</span>}</div></div><div style={{display:"flex",gap:6}}><button onClick={()=>setEditGoal(g)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:13}}><i className="ti ti-pencil" style={{fontSize:13}}/></button><button onClick={()=>setGoals(p=>p.filter(x=>x.id!==g.id))} style={{width:36,height:36,borderRadius:"50%",background:"#E24B4A18",border:"none",cursor:"pointer",color:"#E24B4A",fontSize:13}}>✕</button></div></div></div>))}
-    {editGoal&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setEditGoal(null)}><div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",maxHeight:"85dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"24px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>Edit goal</h3><button onClick={()=>setEditGoal(null)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",color:"#8E8E93",fontSize:18}}>×</button></div><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>Goal</p><input value={editGoal.title} onChange={e=>setEditGoal(p=>({...p,title:e.target.value}))} style={{marginBottom:16}}/><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>Category</p><div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>{GOAL_CATS.map(cat=><button key={cat} onClick={()=>setEditGoal(p=>({...p,cat}))} style={{padding:"8px 16px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:editGoal.cat===cat?"#AAFF00":"#2C2C2E",color:editGoal.cat===cat?"#000":"#8E8E93",fontWeight:editGoal.cat===cat?700:400}}>{cat}</button>)}</div><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>Target date</p><input type="date" value={editGoal.deadline||""} onChange={e=>setEditGoal(p=>({...p,deadline:e.target.value}))} style={{marginBottom:24}}/><button onClick={()=>{setGoals(p=>p.map(x=>x.id===editGoal.id?editGoal:x));setEditGoal(null);showToast("Goal updated!");}} style={{width:"100%",padding:"19px",borderRadius:18,background:"#AAFF00",color:"#000",border:"none",fontFamily:"inherit",fontWeight:800,fontSize:17,cursor:"pointer"}}>Save changes</button></div></div>}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><p style={{margin:0,fontSize:13,color:"var(--t3)"}}>{goals.filter(g=>!g.done).length} active</p><button onClick={onAddGoal} style={{display:"flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add goal</button></div>
+      {goals.filter(g=>!g.done).length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}><p style={{margin:0,fontSize:15,color:"var(--t3)"}}>No active goals. Set one to stay focused.</p></div>}
+      {goals.filter(g=>!g.done).map(g=>(<div key={g.id} style={card}><div style={{display:"flex",alignItems:"center",gap:12}}><button onClick={()=>toggleGoal(g.id)} style={{width:44,height:44,borderRadius:"50%",border:"2px solid #3A3A3C",background:"transparent",cursor:"pointer",flexShrink:0}}/><div style={{flex:1}}><p style={{margin:"0 0 5px",fontSize:14,fontWeight:500,color:"var(--t1)"}}>{g.title}</p><div style={{display:"flex",gap:8}}><span style={{fontSize:11,padding:"2px 8px",borderRadius:50,background:LIME_DIM,color:LIME_TXT,fontWeight:700}}>{g.cat}</span>{g.deadline&&<span style={{fontSize:11,color:"var(--t3)"}}>Due {g.deadline}</span>}</div></div><div style={{display:"flex",gap:6}}><button onClick={()=>setEditGoal(g)} style={{width:36,height:36,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",color:"var(--t2)",fontSize:13}}><i className="ti ti-pencil" style={{fontSize:13}}/></button><button onClick={()=>setGoals(p=>p.filter(x=>x.id!==g.id))} style={{width:36,height:36,borderRadius:"50%",background:"#E24B4A18",border:"none",cursor:"pointer",color:"#E24B4A",fontSize:13}}>✕</button></div></div></div>))}
+    {editGoal&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setEditGoal(null)}><div style={{background:"var(--card)",borderRadius:"24px 24px 0 0",maxHeight:"85dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"24px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"var(--t1)"}}>Edit goal</h3><button onClick={()=>setEditGoal(null)} style={{width:36,height:36,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",color:"var(--t2)",fontSize:18}}>×</button></div><p style={{margin:"0 0 8px",fontSize:13,color:"var(--t2)"}}>Goal</p><input value={editGoal.title} onChange={e=>setEditGoal(p=>({...p,title:e.target.value}))} style={{marginBottom:16}}/><p style={{margin:"0 0 8px",fontSize:13,color:"var(--t2)"}}>Category</p><div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>{GOAL_CATS.map(cat=><button key={cat} onClick={()=>setEditGoal(p=>({...p,cat}))} style={{padding:"8px 16px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:editGoal.cat===cat?"#AAFF00":"var(--surface)",color:editGoal.cat===cat?"#000":"#8E8E93",fontWeight:editGoal.cat===cat?700:400}}>{cat}</button>)}</div><p style={{margin:"0 0 8px",fontSize:13,color:"var(--t2)"}}>Target date</p><input type="date" value={editGoal.deadline||""} onChange={e=>setEditGoal(p=>({...p,deadline:e.target.value}))} style={{marginBottom:24}}/><button onClick={()=>{setGoals(p=>p.map(x=>x.id===editGoal.id?editGoal:x));setEditGoal(null);showToast("Goal updated!");}} style={{width:"100%",padding:"19px",borderRadius:18,background:"#AAFF00",color:"#000",border:"none",fontFamily:"inherit",fontWeight:800,fontSize:17,cursor:"pointer"}}>Save changes</button></div></div>}
     {goals.filter(g=>g.done).length>0&&<><SH>Completed</SH>{goals.filter(g=>g.done).map(g=>(<div key={g.id} style={{...card,opacity:0.5}}><div style={{display:"flex",alignItems:"center",gap:12}}><button onClick={()=>toggleGoal(g.id)} style={{width:44,height:44,borderRadius:"50%",background:LIME,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:LIME_DK,fontSize:18,border:"none",cursor:"pointer"}} title="Mark incomplete"><i className="ti ti-check" style={{fontSize:16}}/></button><p style={{margin:0,fontSize:14,textDecoration:"line-through",color:"#636366",flex:1}}>{g.title}</p><button onClick={()=>setGoals(p=>p.filter(x=>x.id!==g.id))} style={{width:36,height:36,borderRadius:"50%",background:"#E24B4A18",border:"none",cursor:"pointer",color:"#E24B4A",fontSize:13}}>✕</button></div></div>))}</>}
     </div>}
   </div>);
@@ -659,7 +670,7 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
 
 
 //  LIBRARY
-const LibBackBtn=({label,right,onBack})=>(<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><button onClick={onBack} style={{width:44,height:44,borderRadius:"50%",background:"#1C1C1E",border:"none",cursor:"pointer",color:"#fff",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"#fff"}}>{label}</h2>{right}</div>);
+const LibBackBtn=({label,right,onBack})=>(<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><button onClick={onBack} style={{width:44,height:44,borderRadius:"50%",background:"var(--card)",border:"none",cursor:"pointer",color:"var(--t1)",fontSize:18}}>←</button><h2 style={{margin:0,fontSize:18,fontWeight:700,flex:1,color:"var(--t1)"}}>{label}</h2>{right}</div>);
 
 function Library({techniques,setTechniques,partners,setPartners,injuries,setInjuries,sessions=[],onAddPartner,onAddInjury,libSec,setLibSec,warmups,setWarmups}){
   const [techCat,setTechCat]=useState("All");
@@ -684,25 +695,25 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
   if(libSec==="techniques")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Technique Library"/>
     {/* Search */}
     <div style={{position:"relative",marginBottom:12}}>
-      <i className="ti ti-search" style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:"#555",fontSize:16,pointerEvents:"none",zIndex:1}}/>
+      <i className="ti ti-search" style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:"var(--t3)",fontSize:16,pointerEvents:"none",zIndex:1}}/>
       <input value={techSearch} onChange={e=>setTechSearch(e.target.value)} placeholder="Search techniques..." style={{paddingLeft:"42px!important"}}/>
     </div>
     {/* Category pills */}
     <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:14}}>{["All",...TECH_CATS].map(c=><Pill key={c} active={techCat===c} onClick={()=>setTechCat(c)} s={{flexShrink:0,fontSize:12,padding:"7px 14px"}}>{c}</Pill>)}</div>
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-      <p style={{margin:0,fontSize:13,color:"#555"}}>{filtered.length} technique{filtered.length!==1?"s":""}</p>
+      <p style={{margin:0,fontSize:13,color:"var(--t3)"}}>{filtered.length} technique{filtered.length!==1?"s":""}</p>
       <button onClick={()=>setAddOpen(true)} style={{padding:"6px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button>
     </div>
     {/* Empty state */}
-    {techniques.length===0&&<div style={{textAlign:"center",padding:"52px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}>
-      <i className="ti ti-tournament" style={{fontSize:32,color:"#555",display:"block",marginBottom:10}}/>
-      <p style={{margin:"0 0 4px",fontSize:16,fontWeight:600,color:"#fff"}}>No techniques yet</p>
-      <p style={{margin:"0 0 20px",fontSize:13,color:"#555"}}>Start building your move library</p>
+    {techniques.length===0&&<div style={{textAlign:"center",padding:"52px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}>
+      <i className="ti ti-tournament" style={{fontSize:32,color:"var(--t3)",display:"block",marginBottom:10}}/>
+      <p style={{margin:"0 0 4px",fontSize:16,fontWeight:600,color:"var(--t1)"}}>No techniques yet</p>
+      <p style={{margin:"0 0 20px",fontSize:13,color:"var(--t3)"}}>Start building your move library</p>
       <button onClick={()=>setAddOpen(true)} style={{padding:"12px 24px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:14,fontWeight:700,fontFamily:"inherit"}}>Add your first technique</button>
     </div>}
     {/* No search results */}
-    {techniques.length>0&&filtered.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}>
-      <p style={{margin:0,fontSize:15,color:"#555"}}>No techniques match your search</p>
+    {techniques.length>0&&filtered.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}>
+      <p style={{margin:0,fontSize:15,color:"var(--t3)"}}>No techniques match your search</p>
     </div>}
     {/* Technique cards */}
     <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
@@ -713,25 +724,25 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
           <div key={t.id} style={{...card,marginBottom:0}}>
             <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
               <div style={{flex:1,minWidth:0}}>
-                <p style={{margin:"0 0 6px",fontSize:15,fontWeight:600,color:"#fff"}}>{t.name}</p>
-                <span style={{fontSize:11,padding:"2px 10px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93"}}>{t.cat}</span>
-                {t.notes&&<p style={{margin:"8px 0 0",fontSize:13,color:"#8E8E93",lineHeight:1.5}}>{t.notes}</p>}
+                <p style={{margin:"0 0 6px",fontSize:15,fontWeight:600,color:"var(--t1)"}}>{t.name}</p>
+                <span style={{fontSize:11,padding:"2px 10px",borderRadius:50,background:"var(--surface)",color:"var(--t2)"}}>{t.cat}</span>
+                {t.notes&&<p style={{margin:"8px 0 0",fontSize:13,color:"var(--t2)",lineHeight:1.5}}>{t.notes}</p>}
                 {/* Belt progression dots */}
                 <div style={{display:"flex",alignItems:"center",gap:7,marginTop:12}}>
                   {beltIds.map((bid,idx)=>{
                     const b=BELTS.find(x=>x.id===bid)||BELTS[0];
                     const isActive=idx===curIdx;
                     const isFilled=idx<=curIdx;
-                    return(<button key={bid} onClick={()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,belt:bid}:x))} className="tap" style={{width:isActive?16:11,height:isActive?16:11,borderRadius:"50%",border:"none",padding:0,cursor:"pointer",flexShrink:0,background:isFilled?b.color:"#3A3A3C",outline:isActive?`2px solid ${LIME}`:"2px solid transparent",outlineOffset:2,transition:"all 0.18s"}}/>);
+                    return(<button key={bid} onClick={()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,belt:bid}:x))} className="tap" style={{width:isActive?16:11,height:isActive?16:11,borderRadius:"50%",border:"none",padding:0,cursor:"pointer",flexShrink:0,background:isFilled?b.color:"var(--border)",outline:isActive?`2px solid ${LIME}`:"2px solid transparent",outlineOffset:2,transition:"all 0.18s"}}/>);
                   })}
-                  <span style={{fontSize:11,color:"#555",marginLeft:2}}>{BELTS.find(b=>b.id===(t.belt||"white"))?.label}</span>
+                  <span style={{fontSize:11,color:"var(--t3)",marginLeft:2}}>{BELTS.find(b=>b.id===(t.belt||"white"))?.label}</span>
                 </div>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
                 <button onClick={()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,favorite:!x.favorite}:x))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:t.favorite?"#EF9F27":"#555"}}>
                   <i className={t.favorite?"ti ti-star-filled":"ti ti-star"} style={{fontSize:18}}/>
                 </button>
-                <button onClick={()=>setTechniques(p=>p.filter(y=>y.id!==t.id))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#555"}}>
+                <button onClick={()=>setTechniques(p=>p.filter(y=>y.id!==t.id))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--t3)"}}>
                   <i className="ti ti-trash" style={{fontSize:14}}/>
                 </button>
               </div>
@@ -745,7 +756,7 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
       <div style={{marginBottom:12}}><Lbl>Name <span style={{color:"#E24B4A"}}>*</span></Lbl><input value={addName} onChange={e=>setAddName(e.target.value)} placeholder="e.g. Leg Lock" autoFocus/></div>
       <div style={{marginBottom:14}}><Lbl>Category</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{TECH_CATS.map(x=><Pill key={x} active={addCat===x} onClick={()=>setAddCat(x)} s={{fontSize:12,padding:"7px 14px"}}>{x}</Pill>)}</div></div>
       <div style={{marginBottom:14}}><Lbl>Proficiency</Lbl><div style={{display:"flex",justifyContent:"space-between",gap:4}}>{BELTS.slice(0,5).map(b=>(<button key={b.id} onClick={()=>setAddBelt(b.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"4px 0"}}><div style={{width:38,height:38,borderRadius:"50%",background:b.color,outline:addBelt===b.id?`3px solid ${LIME}`:"3px solid transparent",outlineOffset:2,transition:"all 0.2s",boxShadow:addBelt===b.id?`0 0 12px ${LIME}50`:"none"}}/><span style={{fontSize:10,color:addBelt===b.id?"#fff":"#636366",fontWeight:addBelt===b.id?600:400,fontFamily:"inherit"}}>{b.label}</span></button>))}</div></div>
-      <div style={{marginBottom:20}}><Lbl>Notes <span style={{color:"#555",fontWeight:400}}>(optional)</span></Lbl><textarea value={addNotes} onChange={e=>setAddNotes(e.target.value)} placeholder="Key details, setups, tips..." style={{minHeight:60}}/></div>
+      <div style={{marginBottom:20}}><Lbl>Notes <span style={{color:"var(--t3)",fontWeight:400}}>(optional)</span></Lbl><textarea value={addNotes} onChange={e=>setAddNotes(e.target.value)} placeholder="Key details, setups, tips..." style={{minHeight:60}}/></div>
       <PBtn onClick={()=>{if(addName.trim()){setTechniques(p=>[...p,{id:Date.now(),name:addName.trim(),cat:addCat,belt:addBelt,notes:addNotes.trim(),favorite:false,skill:1}]);setAddName("");setAddNotes("");setAddBelt("white");setAddOpen(false);}}} disabled={!addName.trim()}>Add technique</PBtn>
     </BottomSheet>}
   </div>);
@@ -761,9 +772,9 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
     const setEp=fn=>setEditPartnerData(p=>fn(p||ep));
     return(<div className="fade-in">
       <LibBackBtn onBack={()=>{setSelPartner(null);setEditPartnerData(null);}} label="Edit Partner"/>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 12px",background:"#2C2C2E",borderRadius:14}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,padding:"10px 12px",background:"var(--surface)",borderRadius:14}}>
         <div style={{width:36,height:36,borderRadius:"50%",background:sb.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:14,fontWeight:700,color:sb.text}}>{ep.name.charAt(0)||"?"}</span></div>
-        <div style={{flex:1,minWidth:0}}><p style={{margin:0,fontSize:13,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ep.name||"Partner"}</p><p style={{margin:0,fontSize:11,color:"#555"}}>{sb.label} belt{ep.gym?" · "+ep.gym:""}</p></div>
+        <div style={{flex:1,minWidth:0}}><p style={{margin:0,fontSize:13,fontWeight:600,color:"var(--t1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ep.name||"Partner"}</p><p style={{margin:0,fontSize:11,color:"var(--t3)"}}>{sb.label} belt{ep.gym?" · "+ep.gym:""}</p></div>
         <span style={{fontSize:12,color:POS,fontWeight:600,flexShrink:0}}>{pSess.length} sessions</span>
       </div>
       <div style={{marginBottom:12}}><Lbl>Name</Lbl><input value={ep.name} onChange={e=>setEp(p=>({...p,name:e.target.value}))} placeholder="Partner name"/></div>
@@ -775,7 +786,7 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
       <div style={{marginBottom:10}}><Lbl>Game style</Lbl><input value={ep.gameStyle} onChange={e=>setEp(p=>({...p,gameStyle:e.target.value}))} placeholder="e.g. Guard Player"/></div>
       <div style={{marginBottom:16}}><Lbl>Notes</Lbl><textarea value={ep.notes} onChange={e=>setEp(p=>({...p,notes:e.target.value}))} placeholder="Anything else" style={{minHeight:52}}/></div>
       <SH>Training Stats</SH>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>{[{l:"Sessions",v:pSess.length,c:"#fff"},{l:"Last trained",v:lastT,c:"#fff"},{l:"Avg subs",v:avgSubs,c:POS},{l:"Avg tapped",v:avgTapped,c:"#E24B4A"}].map(m=><div key={m.l} style={{background:"#2C2C2E",borderRadius:12,padding:"10px",textAlign:"center"}}><p style={{margin:0,fontSize:m.l==="Last trained"?11:18,fontWeight:700,color:m.c}}>{m.v}</p><p style={{margin:"3px 0 0",fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>)}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>{[{l:"Sessions",v:pSess.length,c:"#fff"},{l:"Last trained",v:lastT,c:"#fff"},{l:"Avg subs",v:avgSubs,c:POS},{l:"Avg tapped",v:avgTapped,c:"#E24B4A"}].map(m=><div key={m.l} style={{background:"var(--surface)",borderRadius:12,padding:"10px",textAlign:"center"}}><p style={{margin:0,fontSize:m.l==="Last trained"?11:18,fontWeight:700,color:m.c}}>{m.v}</p><p style={{margin:"3px 0 0",fontSize:9,color:"var(--t3)",textTransform:"uppercase",letterSpacing:"0.5px"}}>{m.l}</p></div>)}</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
         <button onClick={()=>{setPartners(prev=>prev.filter(x=>x.id!==selPartner.id));setSelPartner(null);setEditPartnerData(null);}} style={{padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14}}>Delete</button>
         <PBtn onClick={()=>{setPartners(prev=>prev.map(x=>x.id===selPartner.id?{...x,...ep}:x));setSelPartner(null);setEditPartnerData(null);}}>Save changes</PBtn>
@@ -784,20 +795,20 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
   }
 
   if(libSec==="partners")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Training Partners" right={<button onClick={onAddPartner} style={{padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button>}/>
-    {partners.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>No partners added yet</p></div>}
+    {partners.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"var(--t3)"}}>No partners added yet</p></div>}
     {partners.map(p=>{const b=BELTS.find(x=>x.id===p.belt)||BELTS[0];const pSess=sessions.filter(s=>s.partner&&s.partner.toLowerCase()===p.name.toLowerCase());const lastT=pSess.length>0?pSess[0].date:null;return(<div key={p.id} className="tap" style={card} onClick={()=>setSelPartner({...p})}>
       <div style={{display:"flex",alignItems:"center",gap:12}}>
         <div style={{width:46,height:46,borderRadius:"50%",background:b.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:16,fontWeight:700,color:b.text}}>{p.name.charAt(0)}</span></div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}}>
-            <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</p>
+            <p style={{margin:0,fontSize:15,fontWeight:600,color:"var(--t1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</p>
             <div style={{display:"flex",gap:2,flexShrink:0,marginLeft:8}}>
-              <button onClick={e=>{e.stopPropagation();setSelPartner({...p});}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>
-              <button onClick={e=>{e.stopPropagation();setPartners(prev=>prev.filter(x=>x.id!==p.id));}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>
+              <button onClick={e=>{e.stopPropagation();setSelPartner({...p});}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"var(--t3)",fontSize:14}}><i className="ti ti-pencil" style={{fontSize:14}}/></button>
+              <button onClick={e=>{e.stopPropagation();setPartners(prev=>prev.filter(x=>x.id!==p.id));}} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",color:"var(--t3)",fontSize:14}}><i className="ti ti-trash" style={{fontSize:14}}/></button>
             </div>
           </div>
-          <p style={{margin:0,fontSize:12,color:"#555"}}>{b.label} belt{p.gym?` · ${p.gym}`:""}</p>
-          {pSess.length>0&&<p style={{margin:"3px 0 0",fontSize:11,color:"#555"}}>{pSess.length} sessions{lastT?" · last "+lastT:""}</p>}
+          <p style={{margin:0,fontSize:12,color:"var(--t3)"}}>{b.label} belt{p.gym?` · ${p.gym}`:""}</p>
+          {pSess.length>0&&<p style={{margin:"3px 0 0",fontSize:11,color:"var(--t3)"}}>{pSess.length} sessions{lastT?" · last "+lastT:""}</p>}
         </div>
       </div>
     </div>);})}
@@ -805,16 +816,16 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
 
   if(libSec==="mobility")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="BJJ Warmup"/>
     <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:14}}>{warmupCats.map(c=><Pill key={c} active={warmupCat===c} onClick={()=>setWarmupCat(c)} s={{flexShrink:0}}>{c}</Pill>)}</div>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}><p style={{margin:0,fontSize:13,color:"#555"}}>{filteredWarmups.length} exercises</p><button onClick={()=>setAddWarmupOpen(true)} style={{padding:"6px 14px",borderRadius:50,background:"#AAFF00",color:"#000",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button></div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>{filteredWarmups.map(w=>(<div key={w.id} style={{...card,position:"relative"}}><button onClick={()=>setWarmups(p=>p.filter(x=>x.id!==w.id))} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:"50%",border:"none",background:"#E24B4A18",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",color:"#E24B4A"}}>✕</button><p style={{margin:"0 0 2px",fontSize:13,fontWeight:500,color:"#fff",paddingRight:32}}>{w.name}</p><p style={{margin:"0 0 6px",fontSize:11,color:"#555"}}>{w.cat}</p>{w.reps&&<p style={{margin:0,fontSize:12,color:"#8E8E93"}}>{w.reps}</p>}</div>))}</div>
-    {filteredWarmups.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"#555"}}>No exercises in this category</p></div>}
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}><p style={{margin:0,fontSize:13,color:"var(--t3)"}}>{filteredWarmups.length} exercises</p><button onClick={()=>setAddWarmupOpen(true)} style={{padding:"6px 14px",borderRadius:50,background:"#AAFF00",color:"#000",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button></div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>{filteredWarmups.map(w=>(<div key={w.id} style={{...card,position:"relative"}}><button onClick={()=>setWarmups(p=>p.filter(x=>x.id!==w.id))} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:"50%",border:"none",background:"#E24B4A18",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",color:"#E24B4A"}}>✕</button><p style={{margin:"0 0 2px",fontSize:13,fontWeight:500,color:"var(--t1)",paddingRight:32}}>{w.name}</p><p style={{margin:"0 0 6px",fontSize:11,color:"var(--t3)"}}>{w.cat}</p>{w.reps&&<p style={{margin:0,fontSize:12,color:"var(--t2)"}}>{w.reps}</p>}</div>))}</div>
+    {filteredWarmups.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><p style={{margin:0,fontSize:15,color:"var(--t3)"}}>No exercises in this category</p></div>}
     {addWarmupOpen&&<BottomSheet onClose={()=>setAddWarmupOpen(false)} title="Add warmup exercise"><div style={{marginBottom:12}}><Lbl>Exercise name <span style={{color:"#E24B4A"}}>*</span></Lbl><input value={addWarmupName} onChange={e=>setAddWarmupName(e.target.value)} placeholder="e.g. Hip Escape" autoFocus/></div><div style={{marginBottom:12}}><Lbl>Sets / Reps</Lbl><input value={addWarmupReps} onChange={e=>setAddWarmupReps(e.target.value)} placeholder="e.g. 3 × 10 reps"/></div><div style={{marginBottom:20}}><Lbl>Category</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{["Warm-up","Hips","Spine","Neck","Wrists","Ankles","Takedowns","Guard","Other"].map(x=><Pill key={x} active={addWarmupCat===x} onClick={()=>setAddWarmupCat(x)} s={{fontSize:12}}>{x}</Pill>)}</div></div><PBtn onClick={()=>{if(addWarmupName.trim()){setWarmups(p=>[...p,{id:Date.now(),name:addWarmupName.trim(),reps:addWarmupReps.trim(),cat:addWarmupCat}]);setAddWarmupName("");setAddWarmupReps("");setAddWarmupOpen(false);}}} disabled={!addWarmupName.trim()}>Add exercise</PBtn></BottomSheet>}
   </div>);
 
   if(libSec==="injuries")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Injury Tracker" right={<button onClick={onAddInjury} style={{padding:"9px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Log injury</button>}/>
-    {activeInjuries.length>0&&<><p style={{margin:"0 0 10px",fontSize:13,color:"#E24B4A",fontWeight:600}}>{activeInjuries.length} active {activeInjuries.length===1?"injury":"injuries"}</p>{activeInjuries.map(inj=>(<div key={inj.id} style={{...card,borderLeft:"3px solid #E24B4A50"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><p style={{margin:"0 0 2px",fontSize:15,fontWeight:600,color:"#fff"}}>{inj.area}</p><p style={{margin:"0 0 6px",fontSize:12,color:"#555"}}>{inj.date}{inj.mechanism?` · ${inj.mechanism}`:""}</p>{inj.notes&&<p style={{margin:0,fontSize:13,color:"#8E8E93"}}>{inj.notes}</p>}</div><div style={{display:"flex",gap:6}}>{["Active","Recovering","Healed"].map(s=><button key={s} onClick={()=>setInjuries(p=>p.map(x=>x.id===inj.id?{...x,status:s}:x))} style={{padding:"5px 10px",borderRadius:50,border:"none",cursor:"pointer",fontSize:11,fontFamily:"inherit",background:inj.status===s?(s==="Active"?"#E24B4A":s==="Recovering"?"#EF9F27":POS):"#2C2C2E",color:inj.status===s?"#fff":"#555",fontWeight:inj.status===s?600:400}}>{s}</button>)}</div></div></div>))}</>}
-    {injuries.filter(i=>i.status==="Healed").length>0&&<><SH>Healed</SH>{injuries.filter(i=>i.status==="Healed").map(inj=>(<div key={inj.id} style={{...card,opacity:0.5}}><p style={{margin:0,fontSize:14,color:"#fff"}}>{inj.area} <span style={{color:POS,fontSize:12}}>healed</span></p></div>))}</>}
-    {injuries.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><i className="ti ti-heart" style={{fontSize:28,color:"#555",display:"block",marginBottom:4}}/><p style={{margin:0,fontSize:15,color:"#555"}}>No injuries logged. Stay healthy!</p></div>}
+    {activeInjuries.length>0&&<><p style={{margin:"0 0 10px",fontSize:13,color:"#E24B4A",fontWeight:600}}>{activeInjuries.length} active {activeInjuries.length===1?"injury":"injuries"}</p>{activeInjuries.map(inj=>(<div key={inj.id} style={{...card,borderLeft:"3px solid #E24B4A50"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><p style={{margin:"0 0 2px",fontSize:15,fontWeight:600,color:"var(--t1)"}}>{inj.area}</p><p style={{margin:"0 0 6px",fontSize:12,color:"var(--t3)"}}>{inj.date}{inj.mechanism?` · ${inj.mechanism}`:""}</p>{inj.notes&&<p style={{margin:0,fontSize:13,color:"var(--t2)"}}>{inj.notes}</p>}</div><div style={{display:"flex",gap:6}}>{["Active","Recovering","Healed"].map(s=><button key={s} onClick={()=>setInjuries(p=>p.map(x=>x.id===inj.id?{...x,status:s}:x))} style={{padding:"5px 10px",borderRadius:50,border:"none",cursor:"pointer",fontSize:11,fontFamily:"inherit",background:inj.status===s?(s==="Active"?"#E24B4A":s==="Recovering"?"#EF9F27":POS):"var(--surface)",color:inj.status===s?"#fff":"#555",fontWeight:inj.status===s?600:400}}>{s}</button>)}</div></div></div>))}</>}
+    {injuries.filter(i=>i.status==="Healed").length>0&&<><SH>Healed</SH>{injuries.filter(i=>i.status==="Healed").map(inj=>(<div key={inj.id} style={{...card,opacity:0.5}}><p style={{margin:0,fontSize:14,color:"var(--t1)"}}>{inj.area} <span style={{color:POS,fontSize:12}}>healed</span></p></div>))}</>}
+    {injuries.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"var(--card)",borderRadius:20,border:"0.5px dashed #3A3A3C"}}><i className="ti ti-heart" style={{fontSize:28,color:"var(--t3)",display:"block",marginBottom:4}}/><p style={{margin:0,fontSize:15,color:"var(--t3)"}}>No injuries logged. Stay healthy!</p></div>}
   </div>);
 
   const menu=[
@@ -823,7 +834,7 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
     {id:"mobility",label:"BJJ Warmup",sub:`${warmups.length} exercises`,icon:"ti-run",color:"#7F77DD"},
     {id:"injuries",label:"Injury Tracker",sub:activeInjuries.length>0?`${activeInjuries.length} active injuries`:"Track and manage injuries",icon:"ti-first-aid-kit",color:"#E24B4A"},
   ];
-  return(<div className="fade-in"><div style={{background:"#1C1C1E",borderRadius:20,overflow:"hidden",border:"0.5px solid #2A2A2C"}}>{menu.map((item,i)=>(<div key={item.id}><button onClick={()=>setLibSec(item.id)} className="tap" style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"18px 16px",border:"none",background:"transparent",cursor:"pointer",textAlign:"left",fontFamily:"inherit",minHeight:76}}><div style={{width:46,height:46,borderRadius:14,background:item.color+"18",border:`1px solid ${item.color}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><i className={`ti ${item.icon}`} style={{fontSize:22,color:item.color}}/></div><div style={{flex:1}}><p style={{margin:"0 0 2px",fontSize:15,fontWeight:600,color:"#fff"}}>{item.label}</p><p style={{margin:0,fontSize:12,color:"#555"}}>{item.sub}</p></div><span style={{color:"#444",fontSize:18}}>›</span></button>{i<menu.length-1&&<div style={{height:"0.5px",background:"#2A2A2C",margin:"0 16px"}}/>}</div>))}</div></div>);
+  return(<div className="fade-in"><div style={{background:"var(--card)",borderRadius:20,overflow:"hidden",border:"0.5px solid var(--border-sub)"}}>{menu.map((item,i)=>(<div key={item.id}><button onClick={()=>setLibSec(item.id)} className="tap" style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"18px 16px",border:"none",background:"transparent",cursor:"pointer",textAlign:"left",fontFamily:"inherit",minHeight:76}}><div style={{width:46,height:46,borderRadius:14,background:item.color+"18",border:`1px solid ${item.color}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><i className={`ti ${item.icon}`} style={{fontSize:22,color:item.color}}/></div><div style={{flex:1}}><p style={{margin:"0 0 2px",fontSize:15,fontWeight:600,color:"var(--t1)"}}>{item.label}</p><p style={{margin:0,fontSize:12,color:"var(--t3)"}}>{item.sub}</p></div><span style={{color:"var(--t4)",fontSize:18}}>›</span></button>{i<menu.length-1&&<div style={{height:"0.5px",background:"var(--border-sub)",margin:"0 16px"}}/>}</div>))}</div></div>);
 }
 
 //  MODALS 
@@ -832,23 +843,23 @@ function QuickLogModal({onClose,onSave}){
   const [duration,setDuration]=useState(90);
   const [step,setStep]=useState(0);
   const steps=[
-    <div style={{padding:"8px 0 20px"}}><p style={{margin:"0 0 20px",fontSize:22,fontWeight:700,color:"#fff"}}>What type of session?</p><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{SESSION_TYPES.map(t=><button key={t} onClick={()=>{setType(t);setStep(1);}} className="tap" style={{padding:"20px 10px",borderRadius:18,background:type===t?LIME:"#2C2C2E",color:type===t?LIME_DK:"#fff",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:15}}>{t}</button>)}</div></div>,
-    <div style={{padding:"8px 0 20px"}}><p style={{margin:"0 0 8px",fontSize:22,fontWeight:700,color:"#fff"}}>How long?</p><p style={{margin:"0 0 28px",fontSize:13,color:"#555"}}>{type} session</p><div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:28,marginBottom:32}}><button onClick={()=>setDuration(d=>Math.max(15,d-15))} style={{width:52,height:52,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",fontSize:24,color:"#fff",fontFamily:"inherit"}}>−</button><div style={{textAlign:"center"}}><p style={{margin:0,fontSize:64,fontWeight:800,color:LIME,lineHeight:1}}>{duration}</p><p style={{margin:"4px 0 0",fontSize:13,color:"#555"}}>minutes</p></div><button onClick={()=>setDuration(d=>Math.min(300,d+15))} style={{width:52,height:52,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",fontSize:24,color:LIME_TXT,fontWeight:700,fontFamily:"inherit"}}>+</button></div><PBtn onClick={()=>onSave({date:todayISO(),type,duration,taps_given:0,taps_received:0,mood:"good",notes:"",techniques:[],id:uid()})} glow>Save session </PBtn></div>
+    <div style={{padding:"8px 0 20px"}}><p style={{margin:"0 0 20px",fontSize:22,fontWeight:700,color:"var(--t1)"}}>What type of session?</p><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>{SESSION_TYPES.map(t=><button key={t} onClick={()=>{setType(t);setStep(1);}} className="tap" style={{padding:"20px 10px",borderRadius:18,background:type===t?LIME:"var(--surface)",color:type===t?LIME_DK:"#fff",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:15}}>{t}</button>)}</div></div>,
+    <div style={{padding:"8px 0 20px"}}><p style={{margin:"0 0 8px",fontSize:22,fontWeight:700,color:"var(--t1)"}}>How long?</p><p style={{margin:"0 0 28px",fontSize:13,color:"var(--t3)"}}>{type} session</p><div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:28,marginBottom:32}}><button onClick={()=>setDuration(d=>Math.max(15,d-15))} style={{width:52,height:52,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",fontSize:24,color:"var(--t1)",fontFamily:"inherit"}}>−</button><div style={{textAlign:"center"}}><p style={{margin:0,fontSize:64,fontWeight:800,color:LIME,lineHeight:1}}>{duration}</p><p style={{margin:"4px 0 0",fontSize:13,color:"var(--t3)"}}>minutes</p></div><button onClick={()=>setDuration(d=>Math.min(300,d+15))} style={{width:52,height:52,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",fontSize:24,color:LIME_TXT,fontWeight:700,fontFamily:"inherit"}}>+</button></div><PBtn onClick={()=>onSave({date:todayISO(),type,duration,taps_given:0,taps_received:0,mood:"good",notes:"",techniques:[],id:uid()})} glow>Save session </PBtn></div>
   ];
-  return(<BottomSheet onClose={onClose} title="Quick Log" noPad={false}><div style={{display:"flex",gap:5,marginBottom:20}}>{[0,1].map(i=><div key={i} style={{flex:1,height:3,borderRadius:2,background:step>=i?LIME:"#2C2C2E"}}/>)}</div>{steps[step]}</BottomSheet>);
+  return(<BottomSheet onClose={onClose} title="Quick Log" noPad={false}><div style={{display:"flex",gap:5,marginBottom:20}}>{[0,1].map(i=><div key={i} style={{flex:1,height:3,borderRadius:2,background:step>=i?LIME:"var(--surface)"}}/>)}</div>{steps[step]}</BottomSheet>);
 }
 
 function PostSessionPrompt({onClose,onSave,sessionDate}){
   const [f,setF]=useState({worked:"",gotMe:"",focus:"",mood:"good"});
   const sv=(k,v)=>setF(p=>({...p,[k]:v}));
   return(<BottomSheet onClose={onClose} title="Quick debrief">
-    <p style={{margin:"0 0 20px",fontSize:14,color:"#8E8E93"}}>30 seconds. This is how you improve faster.</p>
+    <p style={{margin:"0 0 20px",fontSize:14,color:"var(--t2)"}}>30 seconds. This is how you improve faster.</p>
     <div style={{marginBottom:14}}><Lbl c="#1D9E75">What worked?</Lbl><textarea value={f.worked} onChange={e=>sv("worked",e.target.value)} placeholder="What clicked today?" style={{minHeight:60}}/></div>
     <div style={{marginBottom:14}}><Lbl c="#E24B4A">What got you?</Lbl><textarea value={f.gotMe} onChange={e=>sv("gotMe",e.target.value)} placeholder="What submitted you? What position felt wrong?" style={{minHeight:60}}/></div>
     <div style={{marginBottom:14}}><Lbl c="#EF9F27">Focus next time</Lbl><textarea value={f.focus} onChange={e=>sv("focus",e.target.value)} placeholder="One thing to drill or think about next session" style={{minHeight:60}}/></div>
     <div style={{marginBottom:20}}><Lbl>How did it feel?</Lbl><div style={{display:"flex",gap:8}}>{MOODS.map(m=><Pill key={m} active={f.mood===m} onClick={()=>sv("mood",m)} color={MOOD_C[m]} s={{flex:1,fontSize:12,padding:"9px 4px"}}>{m}</Pill>)}</div></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-      <button onClick={onClose} style={{padding:"16px",borderRadius:16,background:"#2C2C2E",color:"#8E8E93",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:15}}>Skip</button>
+      <button onClick={onClose} style={{padding:"16px",borderRadius:16,background:"var(--surface)",color:"var(--t2)",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:15}}>Skip</button>
       <PBtn onClick={()=>onSave({...f,date:sessionDate||todayISO(),id:uid()})}>Save debrief</PBtn>
     </div>
   </BottomSheet>);
@@ -867,13 +878,13 @@ function SessionModal({onClose,onSave,techniques,editItem}){
     <div style={{marginBottom:14}}><Lbl>How did it feel?</Lbl><div style={{display:"flex",gap:8}}>{MOODS.map(m=><Pill key={m} active={f.mood===m} onClick={()=>sv("mood",m)} color={MOOD_C[m]} s={{flex:1,fontSize:12,padding:"9px 4px"}}>{m}</Pill>)}</div></div>
     <div style={{marginBottom:14}}><Lbl>Main training partner</Lbl><input value={f.partner} onChange={e=>sv("partner",e.target.value)} placeholder="Partner name"/></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}><Stepper label="Subs landed" value={f.taps_given} onChange={v=>sv("taps_given",Math.min(20,v))}/><Stepper label="Times tapped" value={f.taps_received} onChange={v=>sv("taps_received",Math.min(20,v))}/></div>
-    <SH>Rounds <span style={{color:"#555",fontWeight:400,textTransform:"none",letterSpacing:"0",fontSize:12}}>(optional)</span></SH>
-    {f.rounds.map((r,i)=>(<div key={r.id} style={{...mc,marginBottom:8}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:13,color:"#fff",fontWeight:600}}>Round {i+1}</span><button onClick={()=>removeRound(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:13,fontFamily:"inherit"}}>Remove</button></div><input value={r.partner} onChange={e=>updateRound(r.id,"partner",e.target.value)} placeholder="Partner" style={{marginBottom:8}}/><div style={{display:"flex",gap:6}}>{[["win","Win"],["loss","Loss"],["neutral","Draw"]].map(([v,l])=><Pill key={v} active={r.result===v} onClick={()=>updateRound(r.id,"result",v)} s={{flex:1,fontSize:12,padding:"8px 4px"}}>{l}</Pill>)}</div></div>))}
-    <button onClick={addRound} style={{width:"100%",padding:"12px",borderRadius:14,background:"#2C2C2E",border:"0.5px dashed #3A3A3C",cursor:"pointer",color:"#8E8E93",fontSize:13,fontFamily:"inherit",marginBottom:14}}>+ Add round</button>
+    <SH>Rounds <span style={{color:"var(--t3)",fontWeight:400,textTransform:"none",letterSpacing:"0",fontSize:12}}>(optional)</span></SH>
+    {f.rounds.map((r,i)=>(<div key={r.id} style={{...mc,marginBottom:8}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:13,color:"var(--t1)",fontWeight:600}}>Round {i+1}</span><button onClick={()=>removeRound(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--t3)",fontSize:13,fontFamily:"inherit"}}>Remove</button></div><input value={r.partner} onChange={e=>updateRound(r.id,"partner",e.target.value)} placeholder="Partner" style={{marginBottom:8}}/><div style={{display:"flex",gap:6}}>{[["win","Win"],["loss","Loss"],["neutral","Draw"]].map(([v,l])=><Pill key={v} active={r.result===v} onClick={()=>updateRound(r.id,"result",v)} s={{flex:1,fontSize:12,padding:"8px 4px"}}>{l}</Pill>)}</div></div>))}
+    <button onClick={addRound} style={{width:"100%",padding:"12px",borderRadius:14,background:"var(--surface)",border:"0.5px dashed #3A3A3C",cursor:"pointer",color:"var(--t2)",fontSize:13,fontFamily:"inherit",marginBottom:14}}>+ Add round</button>
     <SH>Techniques practiced</SH>
     {techniques.filter(t=>t.favorite).length>0&&<div style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"#EF9F27",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Favorites</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{techniques.filter(t=>t.favorite).map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>}
-    {TECH_CATS.map(cat=>{const ct=techniques.filter(t=>t.cat===cat&&!t.favorite);if(!ct.length)return null;return(<div key={cat} style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>{cat}</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{ct.map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>);})}
-    {techniques.filter(t=>!TECH_CATS.includes(t.cat)&&!t.favorite).length>0&&<div style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Other</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{techniques.filter(t=>!TECH_CATS.includes(t.cat)&&!t.favorite).map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>}
+    {TECH_CATS.map(cat=>{const ct=techniques.filter(t=>t.cat===cat&&!t.favorite);if(!ct.length)return null;return(<div key={cat} style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>{cat}</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{ct.map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>);})}
+    {techniques.filter(t=>!TECH_CATS.includes(t.cat)&&!t.favorite).length>0&&<div style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Other</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{techniques.filter(t=>!TECH_CATS.includes(t.cat)&&!t.favorite).map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>}
     <div style={{marginBottom:4}}/>
     <div style={{marginBottom:12}}><Lbl>Coach notes</Lbl><input value={f.coachNotes} onChange={e=>sv("coachNotes",e.target.value)} placeholder="What did your coach tell you?"/></div>
     <Lbl>Session notes</Lbl><textarea value={f.notes} onChange={e=>sv("notes",e.target.value)} placeholder="What happened on the mat today?" style={{marginBottom:20}}/>
@@ -901,8 +912,8 @@ function ProfileModal({profile,setProfile,onClose}){
   return(<BottomSheet onClose={onClose} title="Profile">
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingBottom:20,borderBottom:"0.5px solid #2A2A2C",marginBottom:20}}>
       <div style={{width:80,height:80,borderRadius:"50%",background:beltObj.color,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:12,boxShadow:`0 0 24px ${beltObj.color}50`}}><span style={{fontSize:26,fontWeight:700,color:beltObj.text}}>{initials}</span></div>
-      <p style={{margin:"0 0 2px",fontSize:17,fontWeight:600,color:"#fff"}}>{f.name||"Your name"}</p>
-      {f.gameStyle&&<p style={{margin:0,fontSize:12,color:"#555"}}>{f.gameStyle}</p>}
+      <p style={{margin:"0 0 2px",fontSize:17,fontWeight:600,color:"var(--t1)"}}>{f.name||"Your name"}</p>
+      {f.gameStyle&&<p style={{margin:0,fontSize:12,color:"var(--t3)"}}>{f.gameStyle}</p>}
     </div>
     <Lbl>Name</Lbl><input value={f.name} onChange={e=>setF(p=>({...p,name:e.target.value}))} style={{marginBottom:12}}/>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><div><Lbl>Gym</Lbl><input value={f.gym||""} onChange={e=>setF(p=>({...p,gym:e.target.value}))} placeholder="e.g. Flow Studio"/></div><div><Lbl>Coach</Lbl><input value={f.coach||""} onChange={e=>setF(p=>({...p,coach:e.target.value}))} placeholder="e.g. Coach Marco"/></div></div>
@@ -915,7 +926,7 @@ function ProfileModal({profile,setProfile,onClose}){
   </BottomSheet>);
 }
 
-function MedalPicker({label,value,onChange}){return(<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:13,color:"#8E8E93"}}>{label}</p><div style={{display:"flex",gap:10}}>{MEDAL_OPTS.map(med=>(<button key={med} onClick={()=>onChange(med)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0}}><div style={{width:36,height:36,borderRadius:"50%",background:MEDAL_COLORS[med],border:value===med?"3px solid #AAFF00":"3px solid transparent",transition:"all 0.2s",opacity:med==="None"?0.4:1}}/><span style={{fontSize:10,color:value===med?"#fff":"#555",fontFamily:"inherit"}}>{med}</span></button>))}</div></div>);}
+function MedalPicker({label,value,onChange}){return(<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:13,color:"var(--t2)"}}>{label}</p><div style={{display:"flex",gap:10}}>{MEDAL_OPTS.map(med=>(<button key={med} onClick={()=>onChange(med)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"none",border:"none",cursor:"pointer",padding:0}}><div style={{width:36,height:36,borderRadius:"50%",background:MEDAL_COLORS[med],border:value===med?"3px solid #AAFF00":"3px solid transparent",transition:"all 0.2s",opacity:med==="None"?0.4:1}}/><span style={{fontSize:10,color:value===med?"#fff":"#555",fontFamily:"inherit"}}>{med}</span></button>))}</div></div>);}
 
 function CompetitionModal({onClose,onSave,editItem}){
   const [f,setF]=useState(editItem||{date:todayISO(),event:"",location:"",weight:WEIGHTS[4],wins:0,losses:0,notes:"",ageBracket:"Adult",compBelt:"Purple",joinedGi:true,joinedNogi:false,giWeightMedal:"None",giAbsMedal:"None",nogiWeightMedal:"None",nogiAbsMedal:"None",photo:"",weightTarget:""});
@@ -925,14 +936,14 @@ function CompetitionModal({onClose,onSave,editItem}){
     <div style={{marginBottom:12}}><Lbl>Event name <span style={{color:"#E24B4A"}}>*</span></Lbl><input value={f.event} onChange={e=>sv("event",e.target.value)} placeholder="e.g. Metro BJJ Open"/></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><div><Lbl>Date</Lbl><input type="date" value={f.date} onChange={e=>sv("date",e.target.value)}/></div><div><Lbl>Location</Lbl><input value={f.location} onChange={e=>sv("location",e.target.value)} placeholder="e.g. Manila"/></div></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><div><Lbl>Age bracket</Lbl><select value={f.ageBracket} onChange={e=>sv("ageBracket",e.target.value)}>{AGE_BRACKETS.map(a=><option key={a}>{a}</option>)}</select></div><div><Lbl>Weight class</Lbl><select value={f.weight} onChange={e=>sv("weight",e.target.value)}>{WEIGHTS.map(w=><option key={w}>{w}</option>)}</select></div></div>
-    <div style={{marginBottom:12}}><Lbl>Weight cut target <span style={{color:"#555",fontWeight:400,fontSize:11}}>(kg, optional)</span></Lbl><input type="number" step="0.1" min="30" max="200" value={f.weightTarget||""} onChange={e=>sv("weightTarget",e.target.value)} placeholder="e.g. 72 — enables weigh-in tracking"/></div>
-    <div style={{marginBottom:12}}><Lbl>Belt level</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{COMP_BELTS.map(b=><button key={b} onClick={()=>sv("compBelt",b)} style={{padding:"7px 14px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,background:f.compBelt===b?"#AAFF00":"#2C2C2E",color:f.compBelt===b?"#000":"#8E8E93",fontWeight:f.compBelt===b?700:400}}>{b}</button>)}</div></div>
-    <div style={{marginBottom:12}}><Lbl>Divisions entered</Lbl><div style={{display:"flex",gap:8}}><button onClick={()=>sv("joinedGi",!f.joinedGi)} style={{padding:"9px 20px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:f.joinedGi?"#AAFF00":"#2C2C2E",color:f.joinedGi?"#000":"#8E8E93",fontWeight:f.joinedGi?700:400}}>Gi</button><button onClick={()=>sv("joinedNogi",!f.joinedNogi)} style={{padding:"9px 20px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:f.joinedNogi?"#AAFF00":"#2C2C2E",color:f.joinedNogi?"#000":"#8E8E93",fontWeight:f.joinedNogi?700:400}}>No-Gi</button></div></div>
-    {f.joinedGi&&<div style={{background:"#2C2C2E",borderRadius:16,padding:"14px 16px",marginBottom:12}}><p style={{margin:"0 0 12px",fontSize:13,fontWeight:600,color:"#fff"}}>Gi</p><MedalPicker label="Weight division" value={f.giWeightMedal} onChange={v=>sv("giWeightMedal",v)}/><MedalPicker label="Absolute division" value={f.giAbsMedal} onChange={v=>sv("giAbsMedal",v)}/></div>}
-    {f.joinedNogi&&<div style={{background:"#2C2C2E",borderRadius:16,padding:"14px 16px",marginBottom:12}}><p style={{margin:"0 0 12px",fontSize:13,fontWeight:600,color:"#fff"}}>No-Gi</p><MedalPicker label="Weight division" value={f.nogiWeightMedal} onChange={v=>sv("nogiWeightMedal",v)}/><MedalPicker label="Absolute division" value={f.nogiAbsMedal} onChange={v=>sv("nogiAbsMedal",v)}/></div>}
+    <div style={{marginBottom:12}}><Lbl>Weight cut target <span style={{color:"var(--t3)",fontWeight:400,fontSize:11}}>(kg, optional)</span></Lbl><input type="number" step="0.1" min="30" max="200" value={f.weightTarget||""} onChange={e=>sv("weightTarget",e.target.value)} placeholder="e.g. 72 — enables weigh-in tracking"/></div>
+    <div style={{marginBottom:12}}><Lbl>Belt level</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{COMP_BELTS.map(b=><button key={b} onClick={()=>sv("compBelt",b)} style={{padding:"7px 14px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:12,background:f.compBelt===b?"#AAFF00":"var(--surface)",color:f.compBelt===b?"#000":"#8E8E93",fontWeight:f.compBelt===b?700:400}}>{b}</button>)}</div></div>
+    <div style={{marginBottom:12}}><Lbl>Divisions entered</Lbl><div style={{display:"flex",gap:8}}><button onClick={()=>sv("joinedGi",!f.joinedGi)} style={{padding:"9px 20px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:f.joinedGi?"#AAFF00":"var(--surface)",color:f.joinedGi?"#000":"#8E8E93",fontWeight:f.joinedGi?700:400}}>Gi</button><button onClick={()=>sv("joinedNogi",!f.joinedNogi)} style={{padding:"9px 20px",borderRadius:50,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,background:f.joinedNogi?"#AAFF00":"var(--surface)",color:f.joinedNogi?"#000":"#8E8E93",fontWeight:f.joinedNogi?700:400}}>No-Gi</button></div></div>
+    {f.joinedGi&&<div style={{background:"var(--surface)",borderRadius:16,padding:"14px 16px",marginBottom:12}}><p style={{margin:"0 0 12px",fontSize:13,fontWeight:600,color:"var(--t1)"}}>Gi</p><MedalPicker label="Weight division" value={f.giWeightMedal} onChange={v=>sv("giWeightMedal",v)}/><MedalPicker label="Absolute division" value={f.giAbsMedal} onChange={v=>sv("giAbsMedal",v)}/></div>}
+    {f.joinedNogi&&<div style={{background:"var(--surface)",borderRadius:16,padding:"14px 16px",marginBottom:12}}><p style={{margin:"0 0 12px",fontSize:13,fontWeight:600,color:"var(--t1)"}}>No-Gi</p><MedalPicker label="Weight division" value={f.nogiWeightMedal} onChange={v=>sv("nogiWeightMedal",v)}/><MedalPicker label="Absolute division" value={f.nogiAbsMedal} onChange={v=>sv("nogiAbsMedal",v)}/></div>}
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><Stepper label="Wins" value={f.wins} onChange={v=>sv("wins",Math.min(20,v))}/><Stepper label="Losses" value={f.losses} onChange={v=>sv("losses",Math.min(20,v))}/></div>
     <div style={{marginBottom:12}}><Lbl>Notes</Lbl><textarea value={f.notes} onChange={e=>sv("notes",e.target.value)} placeholder="How did it go?"/></div>
-    <div style={{marginBottom:20}}><Lbl>Competition photo</Lbl>{f.photo?<div style={{position:"relative",marginBottom:8}}><img src={f.photo} style={{width:"100%",borderRadius:12,maxHeight:200,objectFit:"cover"}}/><button onClick={()=>sv("photo","")} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,0.6)",border:"none",cursor:"pointer",color:"#fff",fontSize:14}}>x</button></div>:<label style={{display:"block",padding:"14px",borderRadius:14,background:"#1C1C1E",border:"0.5px dashed #3A3A3C",cursor:"pointer",textAlign:"center",color:"#555",fontSize:14}}><input type="file" accept="image/*" onChange={handlePhoto} style={{display:"none"}}/>Tap to upload photo</label>}</div>
+    <div style={{marginBottom:20}}><Lbl>Competition photo</Lbl>{f.photo?<div style={{position:"relative",marginBottom:8}}><img src={f.photo} style={{width:"100%",borderRadius:12,maxHeight:200,objectFit:"cover"}}/><button onClick={()=>sv("photo","")} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,0.6)",border:"none",cursor:"pointer",color:"var(--t1)",fontSize:14}}>x</button></div>:<label style={{display:"block",padding:"14px",borderRadius:14,background:"var(--card)",border:"0.5px dashed #3A3A3C",cursor:"pointer",textAlign:"center",color:"var(--t3)",fontSize:14}}><input type="file" accept="image/*" onChange={handlePhoto} style={{display:"none"}}/>Tap to upload photo</label>}</div>
     <PBtn onClick={()=>f.event.trim()&&onSave(f)} disabled={!f.event.trim()}>{editItem?"Update event":"Save event"}</PBtn>
   </BottomSheet>);
 }
@@ -957,6 +968,8 @@ function InjuryModal({onClose,onSave}){
 
 //  MAIN APP
 export default function App(){
+  const [lightMode,setLightMode]=useState(()=>localStorage.getItem('grapplr-theme')==='light');
+  const toggleTheme=useCallback(()=>{setLightMode(v=>{const n=!v;localStorage.setItem('grapplr-theme',n?'light':'dark');return n;});},[]);
   const [tab,setTab]=useState("dashboard");
   const [sessions,setSessions]=useState([]);
   const [techniques,setTechniques]=useState(TECH_DEFAULT);
@@ -1013,6 +1026,22 @@ export default function App(){
     return()=>{document.body.style.overflow="";};
   },[modal,selSession]);
 
+  // Training reminder
+  const [reminderHidden,setReminderHidden]=useState(()=>{
+    const t=localStorage.getItem('grapplr-reminder-ts');
+    return t&&(Date.now()-parseInt(t))<86400000*1; // hidden if dismissed <1 day ago
+  });
+  const dismissReminder=useCallback(()=>{localStorage.setItem('grapplr-reminder-ts',Date.now());setReminderHidden(true);},[]);
+  const reminderMsg=useMemo(()=>{
+    if(!loaded||reminderHidden||sessions.length===0)return null;
+    const sorted=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));
+    const lastDate=new Date(sorted[0].date);
+    const daysSince=Math.floor((Date.now()-lastDate.getTime())/86400000);
+    const threshold=Math.max(2,Math.round(7/(profile.weeklyGoal||4)*1.5));
+    if(daysSince<threshold)return null;
+    return daysSince===1?"You haven't trained since yesterday — hit the mat!":daysSince<7?`It's been ${daysSince} days since you last trained.`:`${daysSince} days off the mat — time to roll!`;
+  },[loaded,reminderHidden,sessions,profile.weeklyGoal]);
+
   const showToast=useCallback((msg,action=null)=>{const id=Date.now();setToasts(p=>[...p,{id,msg,action}]);setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),action?5000:2500);},[]);
   const dismissToast=useCallback(id=>setToasts(p=>p.filter(t=>t.id!==id)),[]);
 
@@ -1058,34 +1087,47 @@ export default function App(){
   const handleEditSession=useCallback(s=>{setEditSession(s);setModal("session");},[]);
   const handleTabClick=useCallback((id)=>{setTab(id);if(id!=="library")setLibSec(null);setSelSession(null);},[]);
 
-  if(authLoading||(user&&!loaded))return(<div style={{minHeight:"100vh",background:"#000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><img src={LOGO} alt="Grapplr" style={{width:"60%",maxWidth:200,objectFit:"contain",opacity:0.8}}/><p style={{color:"#555",fontSize:13,margin:0}}>Loading…</p></div>);
+  if(authLoading||(user&&!loaded))return(<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><img src={LOGO} alt="Grapplr" style={{width:"60%",maxWidth:200,objectFit:"contain",opacity:0.8}}/><p style={{color:"var(--t3)",fontSize:13,margin:0}}>Loading…</p></div>);
   if(!user)return <AuthScreen/>;
-  if(!profile.onboarded)return(<div style={{fontFamily:"-apple-system,BlinkMacSystemFont,sans-serif",background:"#000",minHeight:"100vh",overflowX:"clip",width:"100%"}}><GS/><Onboarding onDone={p=>setProfile(p)}/></div>);
+  if(!profile.onboarded)return(<div style={{fontFamily:"-apple-system,BlinkMacSystemFont,sans-serif",background:"var(--bg)",minHeight:"100vh",overflowX:"clip",width:"100%"}}><GS/><Onboarding onDone={p=>setProfile(p)}/></div>);
 
   const beltObj=BELTS.find(b=>b.id===profile.belt)||BELTS[1];
   const tabTitle={sessions:"Train",journal:"Journal",progress:"Progress",library:"Moves"};
 
   return(
-    <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,sans-serif",maxWidth:680,margin:"0 auto",background:"#000",minHeight:"100vh",overflowX:"clip",width:"100%"}}>
-      <GS/>
+    <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,sans-serif",maxWidth:680,margin:"0 auto",background:"var(--bg)",minHeight:"100vh",overflowX:"clip",width:"100%"}}>
+      <GS light={lightMode}/>
       {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px",position:"sticky",top:0,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(12px)",zIndex:100,borderBottom:"0.5px solid #1A1A1A"}}>
-        
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px",position:"sticky",top:0,background:"var(--overlay-hdr)",backdropFilter:"blur(12px)",zIndex:100,borderBottom:"0.5px solid var(--border-dim)"}}>
+
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <button onClick={()=>setModal("profile")} style={{background:"none",border:"none",cursor:"pointer",padding:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:7,padding:"6px 12px 6px 9px",background:"#1C1C1E",borderRadius:50,border:"0.5px solid #2A2A2C"}}>
+            <div style={{display:"flex",alignItems:"center",gap:7,padding:"6px 12px 6px 9px",background:"var(--card)",borderRadius:50,border:"0.5px solid var(--border-sub)"}}>
               <div style={{width:20,height:20,borderRadius:"50%",background:beltObj.color,flexShrink:0,boxShadow:`0 0 8px ${beltObj.color}70`}}/>
-              <span style={{fontSize:13,fontWeight:600,color:"#fff"}}>{beltObj.label}</span>
-              {profile.stripes>0&&<div style={{display:"flex",gap:2}}>{[...Array(profile.stripes)].map((_,i)=><div key={i} style={{width:3,height:8,borderRadius:1.5,background:"rgba(255,255,255,0.5)"}}/>)}</div>}
+              <span style={{fontSize:13,fontWeight:600,color:"var(--t1)"}}>{beltObj.label}</span>
+              {profile.stripes>0&&<div style={{display:"flex",gap:2}}>{[...Array(profile.stripes)].map((_,i)=><div key={i} style={{width:3,height:8,borderRadius:1.5,background:"var(--stripe)"}}/>)}</div>}
             </div>
           </button>
-          <button onClick={()=>signOut(auth)} style={{width:36,height:36,background:"#1C1C1E",border:"0.5px solid #2A2A2C",borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <i className="ti ti-logout" style={{fontSize:16,color:"#555"}}/>
+          <button onClick={toggleTheme} style={{width:36,height:36,background:"var(--card)",border:"0.5px solid var(--border-sub)",borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <i className={lightMode?"ti ti-moon":"ti ti-sun"} style={{fontSize:16,color:"var(--t3)"}}/>
+          </button>
+          <button onClick={()=>signOut(auth)} style={{width:36,height:36,background:"var(--card)",border:"0.5px solid var(--border-sub)",borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <i className="ti ti-logout" style={{fontSize:16,color:"var(--t3)"}}/>
           </button>
         </div>
       </div>
 
-      {tab!=="dashboard"&&<div style={{padding:"18px 20px 0"}}><h2 style={{margin:0,fontSize:24,fontWeight:800,color:"#fff",letterSpacing:"-0.3px"}}>{tabTitle[tab]}</h2></div>}
+      {tab!=="dashboard"&&<div style={{padding:"18px 20px 0"}}><h2 style={{margin:0,fontSize:24,fontWeight:800,color:"var(--t1)",letterSpacing:"-0.3px"}}>{tabTitle[tab]}</h2></div>}
+
+      {/* Training reminder banner */}
+      {reminderMsg&&<div style={{margin:"12px 20px 0",background:"var(--card)",borderRadius:16,padding:"13px 16px",display:"flex",alignItems:"center",gap:12,border:"0.5px solid #AAFF0030"}}>
+        <i className="ti ti-flame" style={{fontSize:20,color:LIME,flexShrink:0}}/>
+        <div style={{flex:1,minWidth:0}}>
+          <p style={{margin:0,fontSize:13,fontWeight:600,color:"var(--t1)"}}>{reminderMsg}</p>
+        </div>
+        <button onClick={()=>{setModal("quicklog");dismissReminder();}} style={{padding:"7px 14px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:700,fontSize:12,flexShrink:0,minHeight:36}}>Log</button>
+        <button onClick={dismissReminder} style={{width:28,height:28,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",color:"var(--t3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>×</button>
+      </div>}
 
       {/* Content */}
       <div style={{padding:"16px 20px 100px"}}>
@@ -1110,7 +1152,7 @@ export default function App(){
       {/* Modals */}
       {modal==="quicklog"&&<QuickLogModal onClose={()=>setModal(null)} onSave={addQuickSession}/>}
       {modal==="session"&&<SessionModal onClose={()=>{setModal(null);setEditSession(null);}} onSave={addSession} techniques={techniques} editItem={editSession}/>}
-      {selSession&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.85)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setSelSession(null)}><div style={{background:"#1C1C1E",borderRadius:"24px 24px 0 0",maxHeight:"85dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"20px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{width:36,height:5,borderRadius:3,background:"#3A3A3C",margin:"0 auto 16px"}}/><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"#fff"}}>Session details</h3><button onClick={()=>setSelSession(null)} style={{width:36,height:36,borderRadius:"50%",background:"#2C2C2E",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#8E8E93",fontSize:18,flexShrink:0}}>×</button></div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.date}</span><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.type}</span><span style={{padding:"6px 14px",borderRadius:50,background:"#2C2C2E",fontSize:13,color:"#fff"}}>{selSession.duration} min</span>{selSession.mood&&<span style={{padding:"6px 14px",borderRadius:50,background:MOOD_C[selSession.mood]+"20",fontSize:13,color:MOOD_C[selSession.mood],fontWeight:600}}>{selSession.mood}</span>}</div>{selSession.partner&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Partner</p><p style={{margin:0,fontSize:15,color:"#fff"}}>{selSession.partner}</p></div>}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#1D9E75"}}>{selSession.taps_given||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Subs landed</p></div><div style={{background:"#2C2C2E",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selSession.taps_received||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"#555"}}>Times tapped</p></div></div>{selSession.notes&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"#fff",lineHeight:1.6}}>{selSession.notes}</p></div>}{selSession.techniques?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Techniques</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{selSession.techniques.map(t=><span key={t} style={{padding:"4px 12px",borderRadius:50,background:"#2C2C2E",fontSize:12,color:"#fff"}}>{t}</span>)}</div></div>}{selSession.rounds?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Rounds</p>{selSession.rounds.map((r,i)=><div key={r.id} style={{background:"#2C2C2E",borderRadius:12,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between"}}><span style={{fontSize:13,color:"#fff"}}>Round {i+1}{r.partner?` · ${r.partner}`:""}</span><span style={{fontSize:12,fontWeight:600,color:r.result==="win"?"#1D9E75":r.result==="loss"?"#E24B4A":"#555"}}>{r.result}</span></div>)}</div>}<button onClick={()=>{handleDeleteSession(selSession.id);setSelSession(null);}} style={{width:"100%",padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14,marginTop:8}}>Delete session</button></div></div>}
+      {selSession&&<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"var(--overlay)",zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}} onClick={()=>setSelSession(null)}><div style={{background:"var(--card)",borderRadius:"24px 24px 0 0",maxHeight:"85dvh",overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"20px 22px 44px"}} onClick={e=>e.stopPropagation()}><div style={{width:36,height:5,borderRadius:3,background:"var(--border)",margin:"0 auto 16px"}}/><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}><h3 style={{margin:0,fontSize:19,fontWeight:700,color:"var(--t1)"}}>Session details</h3><button onClick={()=>setSelSession(null)} style={{width:36,height:36,borderRadius:"50%",background:"var(--surface)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--t2)",fontSize:18,flexShrink:0}}>×</button></div><div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}><span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selSession.date}</span><span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selSession.type}</span><span style={{padding:"6px 14px",borderRadius:50,background:"var(--surface)",fontSize:13,color:"var(--t1)"}}>{selSession.duration} min</span>{selSession.mood&&<span style={{padding:"6px 14px",borderRadius:50,background:MOOD_C[selSession.mood]+"20",fontSize:13,color:MOOD_C[selSession.mood],fontWeight:600}}>{selSession.mood}</span>}</div>{selSession.partner&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Partner</p><p style={{margin:0,fontSize:15,color:"var(--t1)"}}>{selSession.partner}</p></div>}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}><div style={{background:"var(--surface)",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#1D9E75"}}>{selSession.taps_given||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"var(--t3)"}}>Subs landed</p></div><div style={{background:"var(--surface)",borderRadius:14,padding:"12px",textAlign:"center"}}><p style={{margin:0,fontSize:22,fontWeight:800,color:"#E24B4A"}}>{selSession.taps_received||0}</p><p style={{margin:"4px 0 0",fontSize:11,color:"var(--t3)"}}>Times tapped</p></div></div>{selSession.notes&&<div style={{marginBottom:12}}><p style={{margin:"0 0 4px",fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Notes</p><p style={{margin:0,fontSize:14,color:"var(--t1)",lineHeight:1.6}}>{selSession.notes}</p></div>}{selSession.techniques?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Techniques</p><div style={{display:"flex",flexWrap:"wrap",gap:6}}>{selSession.techniques.map(t=><span key={t} style={{padding:"4px 12px",borderRadius:50,background:"var(--surface)",fontSize:12,color:"var(--t1)"}}>{t}</span>)}</div></div>}{selSession.rounds?.length>0&&<div style={{marginBottom:12}}><p style={{margin:"0 0 8px",fontSize:11,color:"var(--t3)",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Rounds</p>{selSession.rounds.map((r,i)=><div key={r.id} style={{background:"var(--surface)",borderRadius:12,padding:"10px 14px",marginBottom:6,display:"flex",justifyContent:"space-between"}}><span style={{fontSize:13,color:"var(--t1)"}}>Round {i+1}{r.partner?` · ${r.partner}`:""}</span><span style={{fontSize:12,fontWeight:600,color:r.result==="win"?"#1D9E75":r.result==="loss"?"#E24B4A":"#555"}}>{r.result}</span></div>)}</div>}<button onClick={()=>{handleDeleteSession(selSession.id);setSelSession(null);}} style={{width:"100%",padding:"14px",borderRadius:14,background:"#E24B4A18",color:"#E24B4A",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:14,marginTop:8}}>Delete session</button></div></div>}
       {modal==="journal"&&<JournalModal onClose={()=>{setModal(null);setJournalInitDate(null);}} onSave={addJournal} initialDate={journalInitDate}/>}
       {modal==="profile"&&<ProfileModal profile={profile} setProfile={p=>{setProfile(p);setModal(null);showToast("Profile updated");}} onClose={()=>setModal(null)}/>}
       {modal==="comp"&&<CompetitionModal onClose={()=>{setModal(null);setEditComp(null);}} onSave={saveComp} editItem={editComp}/>}
