@@ -849,18 +849,86 @@ function QuickLogModal({onClose,onSave}){
   return(<BottomSheet onClose={onClose} title="Quick Log" noPad={false}><div style={{display:"flex",gap:5,marginBottom:20}}>{[0,1].map(i=><div key={i} style={{flex:1,height:3,borderRadius:2,background:step>=i?LIME:"var(--surface)"}}/>)}</div>{steps[step]}</BottomSheet>);
 }
 
-function PostSessionPrompt({onClose,onSave,sessionDate}){
+function generateDebriefInsights(session,allSessions,competitions){
+  const out=[];
+  const sorted=[...allSessions].sort((a,b)=>b.date.localeCompare(a.date));
+  const given=session.taps_given||0,recv=session.taps_received||0;
+
+  // Tough session — got tapped more than you submitted
+  if(recv>=3&&recv>given){
+    const who=session.partner?` by ${session.partner}`:"";
+    out.push({text:`Got tapped ${recv} times${who} — what position was catching you?`,color:"#E24B4A",icon:"ti-alert-circle"});
+  }
+
+  // Dominant session
+  if(given>=4&&given>recv*1.5&&out.length<2){
+    out.push({text:`${given} submissions — strong session. What was working in your game today?`,color:POS,icon:"ti-star"});
+  }
+
+  // Partner pattern — getting the worse end consistently
+  if(session.partner?.trim()&&out.length<2){
+    const pn=session.partner.trim();
+    const ps=sorted.filter(s=>s.partner?.trim()===pn).slice(0,5);
+    if(ps.length>=3){
+      const pt=ps.reduce((a,s)=>a+(s.taps_received||0),0),pg=ps.reduce((a,s)=>a+(s.taps_given||0),0),tot=pt+pg;
+      if(tot>0&&pt>pg&&pt/tot>0.6)out.push({text:`${pn} is getting the better of you in your last ${ps.length} sessions — what's the pattern?`,color:"#EF9F27",icon:"ti-users"});
+    }
+  }
+
+  // Sub rate trend (need 6+ sessions)
+  if(sorted.length>=6&&out.length<2){
+    const r3=sorted.slice(0,3),r8=sorted.slice(3,8);
+    const rg=r3.reduce((a,s)=>a+(s.taps_given||0),0),rt=r3.reduce((a,s)=>a+(s.taps_given||0)+(s.taps_received||0),0);
+    const og=r8.reduce((a,s)=>a+(s.taps_given||0),0),ot=r8.reduce((a,s)=>a+(s.taps_given||0)+(s.taps_received||0),0);
+    if(rt>0&&ot>0){
+      const rr=rg/rt,or=og/ot;
+      if(or>0.3&&rr<or-0.25)out.push({text:"Your sub rate has dropped lately — are you rolling at full intensity or taking it easy?",color:"#EF9F27",icon:"ti-trending-down"});
+      else if(rr>or+0.25&&rr>0.5&&out.length<2)out.push({text:"Your submission rate is up over your last 3 sessions — what's clicking?",color:POS,icon:"ti-trending-up"});
+    }
+  }
+
+  // Rough patch — 3 bad/okay moods in a row
+  if(out.length<2){
+    const last3=sorted.slice(0,3);
+    if(last3.length===3&&last3.every(s=>s.mood==="Bad"||s.mood==="Okay"))
+      out.push({text:"Three sessions in a row feeling rough — your body might be asking for rest.",color:"#E24B4A",icon:"ti-moon"});
+  }
+
+  // Upcoming comp countdown
+  if(out.length<2){
+    const next=competitions.filter(c=>c.date>session.date).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    if(next){
+      const d=Math.ceil((new Date(next.date)-new Date(session.date))/86400000);
+      if(d<=21)out.push({text:d<=7?`${next.event} is in ${d} day${d!==1?"s":""} — are you peaked and tapering?`:`${d} days to ${next.event} — is your A-game sharp?`,color:LIME,icon:"ti-trophy"});
+    }
+  }
+
+  return out.slice(0,2);
+}
+
+function PostSessionPrompt({onClose,onSave,session,sessions,competitions}){
   const [f,setF]=useState({worked:"",gotMe:"",focus:"",mood:"good"});
   const sv=(k,v)=>setF(p=>({...p,[k]:v}));
+  const insights=useMemo(()=>generateDebriefInsights(session,sessions,competitions),[session,sessions,competitions]);
   return(<BottomSheet onClose={onClose} title="Quick debrief">
-    <p style={{margin:"0 0 20px",fontSize:14,color:"var(--t2)"}}>30 seconds. This is how you improve faster.</p>
+    {insights.length>0
+      ?<div style={{marginBottom:20,display:"flex",flexDirection:"column",gap:8}}>
+        {insights.map((ins,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,background:ins.color+"12",borderRadius:14,padding:"11px 14px",borderLeft:`3px solid ${ins.color}`}}>
+            <i className={`ti ${ins.icon}`} style={{fontSize:16,color:ins.color,flexShrink:0,marginTop:1}}/>
+            <p style={{margin:0,fontSize:13,color:"var(--t1)",lineHeight:1.5}}>{ins.text}</p>
+          </div>
+        ))}
+      </div>
+      :<p style={{margin:"0 0 20px",fontSize:14,color:"var(--t2)"}}>30 seconds. This is how you improve faster.</p>
+    }
     <div style={{marginBottom:14}}><Lbl c="#1D9E75">What worked?</Lbl><textarea value={f.worked} onChange={e=>sv("worked",e.target.value)} placeholder="What clicked today?" style={{minHeight:60}}/></div>
     <div style={{marginBottom:14}}><Lbl c="#E24B4A">What got you?</Lbl><textarea value={f.gotMe} onChange={e=>sv("gotMe",e.target.value)} placeholder="What submitted you? What position felt wrong?" style={{minHeight:60}}/></div>
     <div style={{marginBottom:14}}><Lbl c="#EF9F27">Focus next time</Lbl><textarea value={f.focus} onChange={e=>sv("focus",e.target.value)} placeholder="One thing to drill or think about next session" style={{minHeight:60}}/></div>
     <div style={{marginBottom:20}}><Lbl>How did it feel?</Lbl><div style={{display:"flex",gap:8}}>{MOODS.map(m=><Pill key={m} active={f.mood===m} onClick={()=>sv("mood",m)} color={MOOD_C[m]} s={{flex:1,fontSize:12,padding:"9px 4px"}}>{m}</Pill>)}</div></div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
       <button onClick={onClose} style={{padding:"16px",borderRadius:16,background:"var(--surface)",color:"var(--t2)",border:"none",cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:15}}>Skip</button>
-      <PBtn onClick={()=>onSave({...f,date:sessionDate||todayISO(),id:uid()})}>Save debrief</PBtn>
+      <PBtn onClick={()=>onSave({...f,date:session?.date||todayISO(),id:uid()})}>Save debrief</PBtn>
     </div>
   </BottomSheet>);
 }
@@ -990,7 +1058,7 @@ export default function App(){
   const [loaded,setLoaded]=useState(false);
   const [user,setUser]=useState(null);
   const [authLoading,setAuthLoading]=useState(true);
-  const [postSessionDate,setPostSessionDate]=useState(null);
+  const [postSession,setPostSession]=useState(null);
   const undoRef=useRef({});
 
   useEffect(()=>{const unsub=onAuthStateChanged(auth,u=>{setUser(u);setAuthLoading(false);});return unsub;},[]);
@@ -1059,7 +1127,7 @@ export default function App(){
     }else{
       const ns={...s,id:uid()};
       setSessions(p=>[ns,...p]);
-      setPostSessionDate(ns.date);
+      setPostSession(ns);
       showToast(`Session saved — +${50+(ns.taps_given||0)*10} XP`);
     }
     setModal(null);
@@ -1068,13 +1136,13 @@ export default function App(){
   const addQuickSession=useCallback(s=>{
     setSessions(p=>[s,...p]);
     setModal(null);
-    setPostSessionDate(s.date);
+    setPostSession(s);
     showToast("Quick session saved — +50 XP");
   },[showToast]);
 
   const savePostSession=useCallback(e=>{
     setJournal(p=>[{...e,id:Date.now()},...p]);
-    setPostSessionDate(null);
+    setPostSession(null);
     showToast("Debrief saved");
   },[showToast]);
 
@@ -1161,7 +1229,7 @@ export default function App(){
       {modal==="injury"&&<InjuryModal onClose={()=>setModal(null)} onSave={addInjury}/>}
 
       {/* Post-session auto debrief */}
-      {postSessionDate&&<PostSessionPrompt onClose={()=>setPostSessionDate(null)} onSave={savePostSession} sessionDate={postSessionDate}/>}
+      {postSession&&<PostSessionPrompt onClose={()=>setPostSession(null)} onSave={savePostSession} session={postSession} sessions={sessions} competitions={competitions}/>}
     </div>
   );
 }
