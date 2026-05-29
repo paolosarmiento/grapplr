@@ -31,6 +31,7 @@ const WEIGHTS=["Rooster (-57.5kg)","Light Feather (-64kg)","Feather (-70kg)","Li
 const MOTIVATIONS=["A black belt is a white belt who never quit.","The mat is your mirror. Show up and reflect.","Roll hard. Tap. Learn. Repeat.","Every session is a deposit in your BJJ bank.","Embrace the grind. Trust the process.","Discomfort is the price of growth on the mat.","Your worst day training beats your best day on the couch."];
 const BELTS=[{id:"white",color:"#E8E8E8",text:"#333",label:"White"},{id:"blue",color:"#1565C0",text:"#fff",label:"Blue"},{id:"purple",color:"#6A1B9A",text:"#fff",label:"Purple"},{id:"brown",color:"#5D4037",text:"#fff",label:"Brown"},{id:"black",color:"#222",text:"#fff",label:"Black"},{id:"coral",color:"#CC3D00",text:"#fff",label:"Coral"}];
 const GAME_STYLES=["Guard Player","Passer","Submission Hunter","Wrestler","Balanced","Defensive"];
+const TECH_CATS=["Guard","Pass","Sweep","Takedown","Submission","Escape","Back Control"];
 const FAV_POSITIONS=["Closed Guard","Half Guard","Butterfly Guard","De La Riva","X-Guard","Mount","Back Control","Side Control","Turtle","Leg Entanglements"];
 const BJJ_MOBILITY=[
   {id:1,name:"Granby Roll",reps:"3 × 5 each side",cat:"Warm-up"},
@@ -50,28 +51,30 @@ const BJJ_MOBILITY=[
   {id:15,name:"Guard Retention Drill",reps:"3 × 30 sec",cat:"Guard"},
 ];
 const TECH_DEFAULT=[
-  {id:1,name:"Armbar",cat:"Submissions",skill:3},
-  {id:2,name:"Triangle Choke",cat:"Submissions",skill:2},
-  {id:3,name:"Rear Naked Choke",cat:"Submissions",skill:4},
-  {id:4,name:"Guillotine",cat:"Submissions",skill:3},
-  {id:5,name:"Kimura",cat:"Submissions",skill:2},
-  {id:6,name:"Darce Choke",cat:"Submissions",skill:1},
-  {id:7,name:"Omo Plata",cat:"Submissions",skill:2},
-  {id:8,name:"Heel Hook",cat:"Submissions",skill:2},
-  {id:9,name:"Butterfly Guard",cat:"Guard",skill:3},
-  {id:10,name:"Closed Guard",cat:"Guard",skill:4},
-  {id:11,name:"Half Guard",cat:"Guard",skill:3},
-  {id:12,name:"De La Riva",cat:"Guard",skill:2},
-  {id:13,name:"X-Guard",cat:"Guard",skill:2},
-  {id:14,name:"Single Leg",cat:"Takedowns",skill:3},
-  {id:15,name:"Double Leg",cat:"Takedowns",skill:2},
-  {id:16,name:"Ankle Pick",cat:"Takedowns",skill:2},
-  {id:17,name:"Mount Escape (Elbow-Knee)",cat:"Escapes",skill:3},
-  {id:18,name:"Back Escape",cat:"Escapes",skill:2},
-  {id:19,name:"Scissor Sweep",cat:"Sweeps",skill:3},
-  {id:20,name:"Hip Bump Sweep",cat:"Sweeps",skill:4},
-  {id:21,name:"Berimbolo",cat:"Sweeps",skill:3},
-  {id:22,name:"Flower Sweep",cat:"Sweeps",skill:3},
+  {id:1,name:"Armbar",cat:"Submission",belt:"white",notes:"",favorite:false,skill:3},
+  {id:2,name:"Triangle Choke",cat:"Submission",belt:"white",notes:"",favorite:false,skill:2},
+  {id:3,name:"Guillotine",cat:"Submission",belt:"white",notes:"",favorite:false,skill:3},
+  {id:4,name:"Kimura",cat:"Submission",belt:"white",notes:"",favorite:false,skill:2},
+  {id:5,name:"Darce Choke",cat:"Submission",belt:"blue",notes:"",favorite:false,skill:1},
+  {id:6,name:"Omo Plata",cat:"Submission",belt:"blue",notes:"",favorite:false,skill:2},
+  {id:7,name:"Heel Hook",cat:"Submission",belt:"purple",notes:"",favorite:false,skill:2},
+  {id:8,name:"Rear Naked Choke",cat:"Back Control",belt:"white",notes:"",favorite:false,skill:4},
+  {id:9,name:"Butterfly Guard",cat:"Guard",belt:"blue",notes:"",favorite:false,skill:3},
+  {id:10,name:"Closed Guard",cat:"Guard",belt:"white",notes:"",favorite:true,skill:4},
+  {id:11,name:"Half Guard",cat:"Guard",belt:"white",notes:"",favorite:false,skill:3},
+  {id:12,name:"De La Riva",cat:"Guard",belt:"blue",notes:"",favorite:false,skill:2},
+  {id:13,name:"X-Guard",cat:"Guard",belt:"purple",notes:"",favorite:false,skill:2},
+  {id:14,name:"Torreando Pass",cat:"Pass",belt:"white",notes:"",favorite:false,skill:3},
+  {id:15,name:"Over-Under Pass",cat:"Pass",belt:"blue",notes:"",favorite:false,skill:2},
+  {id:16,name:"Single Leg",cat:"Takedown",belt:"white",notes:"",favorite:false,skill:3},
+  {id:17,name:"Double Leg",cat:"Takedown",belt:"white",notes:"",favorite:false,skill:2},
+  {id:18,name:"Ankle Pick",cat:"Takedown",belt:"blue",notes:"",favorite:false,skill:2},
+  {id:19,name:"Mount Escape (Elbow-Knee)",cat:"Escape",belt:"white",notes:"",favorite:false,skill:3},
+  {id:20,name:"Back Escape",cat:"Escape",belt:"blue",notes:"",favorite:false,skill:2},
+  {id:21,name:"Scissor Sweep",cat:"Sweep",belt:"white",notes:"",favorite:false,skill:3},
+  {id:22,name:"Hip Bump Sweep",cat:"Sweep",belt:"white",notes:"",favorite:true,skill:4},
+  {id:23,name:"Berimbolo",cat:"Sweep",belt:"purple",notes:"",favorite:false,skill:3},
+  {id:24,name:"Flower Sweep",cat:"Sweep",belt:"white",notes:"",favorite:false,skill:3},
 ];
 const WEEKLY_CHALLENGES=[
   {id:0,title:"Train 4x this week",desc:"Consistency is the #1 predictor of improvement.",type:"sessions",target:4},
@@ -542,10 +545,12 @@ const LibBackBtn=({label,right,onBack})=>(<div style={{display:"flex",alignItems
 
 function Library({techniques,setTechniques,partners,setPartners,injuries,setInjuries,sessions=[],onAddPartner,onAddInjury,libSec,setLibSec,warmups,setWarmups}){
   const [techCat,setTechCat]=useState("All");
-  const [showSkillDefs,setShowSkillDefs]=useState(false);
+  const [techSearch,setTechSearch]=useState("");
   const [addOpen,setAddOpen]=useState(false);
   const [addName,setAddName]=useState("");
-  const [addCat,setAddCat]=useState("Submissions");
+  const [addCat,setAddCat]=useState(TECH_CATS[0]);
+  const [addBelt,setAddBelt]=useState("white");
+  const [addNotes,setAddNotes]=useState("");
   const [warmupCat,setWarmupCat]=useState("All");
   const [addWarmupOpen,setAddWarmupOpen]=useState(false);
   const [addWarmupName,setAddWarmupName]=useState("");
@@ -553,20 +558,70 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
   const [addWarmupCat,setAddWarmupCat]=useState("Warm-up");
   const [selPartner,setSelPartner]=useState(null);
   const [editPartnerData,setEditPartnerData]=useState(null);
-  const cats=useMemo(()=>["All",...new Set(techniques.map(t=>t.cat))],[techniques]);
-  const filtered=useMemo(()=>techCat==="All"?techniques:techniques.filter(t=>t.cat===techCat),[techniques,techCat]);
+  const filtered=useMemo(()=>{let r=techCat==="All"?techniques:techniques.filter(t=>t.cat===techCat);if(techSearch.trim())r=r.filter(t=>t.name.toLowerCase().includes(techSearch.toLowerCase()));return r.sort((a,b)=>(b.favorite?1:0)-(a.favorite?1:0));},[techniques,techCat,techSearch]);
   const warmupCats=useMemo(()=>["All",...new Set(warmups.map(w=>w.cat))],[warmups]);
   const filteredWarmups=useMemo(()=>warmupCat==="All"?warmups:warmups.filter(w=>w.cat===warmupCat),[warmups,warmupCat]);
   const activeInjuries=injuries.filter(i=>i.status!=="Healed");
-  const upSkill=useCallback(id=>setTechniques(p=>p.map(x=>x.id===id?{...x,skill:Math.min(5,(x.skill||1)+1)}:x)),[setTechniques]);
-  const downSkill=useCallback(id=>setTechniques(p=>p.map(x=>x.id===id?{...x,skill:Math.max(1,(x.skill||1)-1)}:x)),[setTechniques]);
 
   if(libSec==="techniques")return(<div className="fade-in"><LibBackBtn onBack={()=>setLibSec(null)} label="Technique Library"/>
-    <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:14}}>{cats.map(c=><Pill key={c} active={techCat===c} onClick={()=>setTechCat(c)} s={{flexShrink:0}}>{c}</Pill>)}</div>
-    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}><p style={{margin:0,fontSize:13,color:"#555"}}>{filtered.length} techniques</p><button onClick={()=>setShowSkillDefs(true)} style={{padding:"6px 14px",borderRadius:50,background:"#1C1C1E",border:"none",cursor:"pointer",fontSize:12,color:"#8E8E93",fontFamily:"inherit",minHeight:44}}>Skill levels</button><button onClick={()=>setAddOpen(true)} style={{padding:"6px 14px",borderRadius:50,background:"#AAFF00",color:"#000",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button></div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>{filtered.map(t=>(<div key={t.id} style={{...card,position:"relative"}}><button onClick={()=>setTechniques(p=>p.filter(y=>y.id!==t.id))} style={{position:"absolute",top:8,right:8,width:28,height:28,borderRadius:"50%",border:"none",background:"#E24B4A18",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",color:"#E24B4A"}}>✕</button><p style={{margin:"0 0 2px",fontSize:13,fontWeight:500,color:"#fff",paddingRight:32}}>{t.name}</p><p style={{margin:"0 0 10px",fontSize:11,color:"#555"}}>{t.cat}</p><SkillDots skill={t.skill||1}/><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:10}}><span style={{fontSize:11,color:SKILL_COLORS[t.skill||1],fontWeight:500}}>{SKILL_LABELS[t.skill||1]}</span><div style={{display:"flex",gap:6}}><button onClick={()=>downSkill(t.id)} style={{width:36,height:36,borderRadius:"50%",border:"none",background:"#2C2C2E",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff"}}>−</button><button onClick={()=>upSkill(t.id)} style={{width:36,height:36,borderRadius:"50%",border:"none",background:LIME_DIM,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",color:LIME_TXT,fontWeight:700}}>+</button></div></div></div>))}</div>
-    {addOpen&&<BottomSheet onClose={()=>setAddOpen(false)} title="Add technique"><div style={{marginBottom:12}}><Lbl>Name</Lbl><input value={addName} onChange={e=>setAddName(e.target.value)} placeholder="e.g. Leg Lock" autoFocus/></div><div style={{marginBottom:20}}><Lbl>Category</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{["Submissions","Guard","Takedowns","Escapes","Sweeps","Other"].map(x=><Pill key={x} active={addCat===x} onClick={()=>setAddCat(x)} s={{fontSize:12}}>{x}</Pill>)}</div></div><PBtn onClick={()=>{if(addName.trim()){setTechniques(p=>[...p,{id:Date.now(),name:addName.trim(),cat:addCat,skill:1}]);setAddName("");setAddOpen(false);}}} disabled={!addName.trim()}>Add technique</PBtn></BottomSheet>}
-    {showSkillDefs&&<BottomSheet onClose={()=>setShowSkillDefs(false)} title="Skill levels explained">{SKILL_DEFS.slice(1).map((def,i)=>(<div key={i} style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:16}}><span style={{fontSize:12,color:SKILL_COLORS[i+1],fontWeight:700,minWidth:90}}>{SKILL_LABELS[i+1]}</span><p style={{margin:0,fontSize:13,color:"#8E8E93",lineHeight:1.6,flex:1}}>{def}</p></div>))}</BottomSheet>}
+    {/* Search */}
+    <div style={{position:"relative",marginBottom:12}}>
+      <i className="ti ti-search" style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:"#555",fontSize:16,pointerEvents:"none",zIndex:1}}/>
+      <input value={techSearch} onChange={e=>setTechSearch(e.target.value)} placeholder="Search techniques..." style={{paddingLeft:"42px!important"}}/>
+    </div>
+    {/* Category pills */}
+    <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:10,marginBottom:14}}>{["All",...TECH_CATS].map(c=><Pill key={c} active={techCat===c} onClick={()=>setTechCat(c)} s={{flexShrink:0,fontSize:12,padding:"7px 14px"}}>{c}</Pill>)}</div>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+      <p style={{margin:0,fontSize:13,color:"#555"}}>{filtered.length} technique{filtered.length!==1?"s":""}</p>
+      <button onClick={()=>setAddOpen(true)} style={{padding:"6px 18px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"inherit",minHeight:44}}>+ Add</button>
+    </div>
+    {/* Empty state */}
+    {techniques.length===0&&<div style={{textAlign:"center",padding:"52px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}>
+      <i className="ti ti-tournament" style={{fontSize:32,color:"#555",display:"block",marginBottom:10}}/>
+      <p style={{margin:"0 0 4px",fontSize:16,fontWeight:600,color:"#fff"}}>No techniques yet</p>
+      <p style={{margin:"0 0 20px",fontSize:13,color:"#555"}}>Start building your move library</p>
+      <button onClick={()=>setAddOpen(true)} style={{padding:"12px 24px",borderRadius:50,background:LIME,color:LIME_DK,border:"none",cursor:"pointer",fontSize:14,fontWeight:700,fontFamily:"inherit"}}>Add your first technique</button>
+    </div>}
+    {/* No search results */}
+    {techniques.length>0&&filtered.length===0&&<div style={{textAlign:"center",padding:"40px 20px",background:"#1C1C1E",borderRadius:20,border:"0.5px dashed #3A3A3C",marginBottom:12}}>
+      <p style={{margin:0,fontSize:15,color:"#555"}}>No techniques match your search</p>
+    </div>}
+    {/* Technique cards */}
+    <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
+      {filtered.map(t=>{const tb=BELTS.find(b=>b.id===(t.belt||"white"))||BELTS[0];return(
+        <div key={t.id} style={{...card,marginBottom:0}}>
+          <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+                <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{t.name}</p>
+                <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 10px",borderRadius:50,background:tb.color+"22",border:`1px solid ${tb.color}40`}}>
+                  <span style={{width:6,height:6,borderRadius:"50%",background:tb.color,flexShrink:0,boxShadow:`0 0 5px ${tb.color}80`}}/>
+                  <span style={{fontSize:10,color:tb.color,fontWeight:600}}>{tb.label}</span>
+                </span>
+              </div>
+              <span style={{fontSize:11,padding:"2px 10px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93"}}>{t.cat}</span>
+              {t.notes&&<p style={{margin:"8px 0 0",fontSize:13,color:"#8E8E93",lineHeight:1.5}}>{t.notes}</p>}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
+              <button onClick={()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,favorite:!x.favorite}:x))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:t.favorite?"#EF9F27":"#555"}}>
+                <i className={t.favorite?"ti ti-star-filled":"ti ti-star"} style={{fontSize:18}}/>
+              </button>
+              <button onClick={()=>setTechniques(p=>p.filter(y=>y.id!==t.id))} style={{width:36,height:36,background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#555"}}>
+                <i className="ti ti-trash" style={{fontSize:14}}/>
+              </button>
+            </div>
+          </div>
+        </div>
+      );})}
+    </div>
+    {/* Add technique sheet */}
+    {addOpen&&<BottomSheet onClose={()=>{setAddOpen(false);setAddName("");setAddNotes("");setAddBelt("white");}} title="Add technique">
+      <div style={{marginBottom:12}}><Lbl>Name <span style={{color:"#E24B4A"}}>*</span></Lbl><input value={addName} onChange={e=>setAddName(e.target.value)} placeholder="e.g. Leg Lock" autoFocus/></div>
+      <div style={{marginBottom:14}}><Lbl>Category</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{TECH_CATS.map(x=><Pill key={x} active={addCat===x} onClick={()=>setAddCat(x)} s={{fontSize:12,padding:"7px 14px"}}>{x}</Pill>)}</div></div>
+      <div style={{marginBottom:14}}><Lbl>Belt level</Lbl><div style={{display:"flex",justifyContent:"space-between",gap:4}}>{BELTS.slice(0,5).map(b=>(<button key={b.id} onClick={()=>setAddBelt(b.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"4px 0"}}><div style={{width:38,height:38,borderRadius:"50%",background:b.color,outline:addBelt===b.id?`3px solid ${LIME}`:"3px solid transparent",outlineOffset:2,transition:"all 0.2s",boxShadow:addBelt===b.id?`0 0 12px ${LIME}50`:"none"}}/><span style={{fontSize:10,color:addBelt===b.id?"#fff":"#636366",fontWeight:addBelt===b.id?600:400,fontFamily:"inherit"}}>{b.label}</span></button>))}</div></div>
+      <div style={{marginBottom:20}}><Lbl>Notes <span style={{color:"#555",fontWeight:400}}>(optional)</span></Lbl><textarea value={addNotes} onChange={e=>setAddNotes(e.target.value)} placeholder="Key details, setups, tips..." style={{minHeight:60}}/></div>
+      <PBtn onClick={()=>{if(addName.trim()){setTechniques(p=>[...p,{id:Date.now(),name:addName.trim(),cat:addCat,belt:addBelt,notes:addNotes.trim(),favorite:false,skill:1}]);setAddName("");setAddNotes("");setAddBelt("white");setAddOpen(false);}}} disabled={!addName.trim()}>Add technique</PBtn>
+    </BottomSheet>}
   </div>);
 
   // Partner edit — full-page view (no fixed modal, no iOS overflow issues)
@@ -690,7 +745,10 @@ function SessionModal({onClose,onSave,techniques,editItem}){
     {f.rounds.map((r,i)=>(<div key={r.id} style={{...mc,marginBottom:8}}><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}><span style={{fontSize:13,color:"#fff",fontWeight:600}}>Round {i+1}</span><button onClick={()=>removeRound(r.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#555",fontSize:13,fontFamily:"inherit"}}>Remove</button></div><input value={r.partner} onChange={e=>updateRound(r.id,"partner",e.target.value)} placeholder="Partner" style={{marginBottom:8}}/><div style={{display:"flex",gap:6}}>{[["win","Win"],["loss","Loss"],["neutral","Draw"]].map(([v,l])=><Pill key={v} active={r.result===v} onClick={()=>updateRound(r.id,"result",v)} s={{flex:1,fontSize:12,padding:"8px 4px"}}>{l}</Pill>)}</div></div>))}
     <button onClick={addRound} style={{width:"100%",padding:"12px",borderRadius:14,background:"#2C2C2E",border:"0.5px dashed #3A3A3C",cursor:"pointer",color:"#8E8E93",fontSize:13,fontFamily:"inherit",marginBottom:14}}>+ Add round</button>
     <SH>Techniques practiced</SH>
-    <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>{techniques.slice(0,20).map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0}}>{t.name}</Pill>)}</div>
+    {techniques.filter(t=>t.favorite).length>0&&<div style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"#EF9F27",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Favorites</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{techniques.filter(t=>t.favorite).map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>}
+    {TECH_CATS.map(cat=>{const ct=techniques.filter(t=>t.cat===cat&&!t.favorite);if(!ct.length)return null;return(<div key={cat} style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>{cat}</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{ct.map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>);})}
+    {techniques.filter(t=>!TECH_CATS.includes(t.cat)&&!t.favorite).length>0&&<div style={{marginBottom:10}}><p style={{margin:"0 0 8px",fontSize:11,color:"#555",fontWeight:600,textTransform:"uppercase",letterSpacing:"0.5px"}}>Other</p><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{techniques.filter(t=>!TECH_CATS.includes(t.cat)&&!t.favorite).map(t=><Pill key={t.id} active={f.techniques.includes(t.name)} onClick={()=>toggle(t.name)} s={{flexShrink:0,fontSize:12}}>{t.name}</Pill>)}</div></div>}
+    <div style={{marginBottom:4}}/>
     <div style={{marginBottom:12}}><Lbl>Coach notes</Lbl><input value={f.coachNotes} onChange={e=>sv("coachNotes",e.target.value)} placeholder="What did your coach tell you?"/></div>
     <Lbl>Session notes</Lbl><textarea value={f.notes} onChange={e=>sv("notes",e.target.value)} placeholder="What happened on the mat today?" style={{marginBottom:20}}/>
     <PBtn onClick={()=>onSave(f)} glow>{editItem?"Update session":"Save session"}</PBtn>
@@ -770,7 +828,7 @@ function InjuryModal({onClose,onSave}){
   return(<BottomSheet onClose={onClose} title="Log injury"><div style={{marginBottom:12}}><Lbl>Body area</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{INJURY_AREAS.map(a=><Pill key={a} active={f.area===a} onClick={()=>sv("area",a)} s={{fontSize:12}}>{a}</Pill>)}</div></div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}><div><Lbl>Date</Lbl><input type="date" max={todayISO()} value={f.date} onChange={e=>sv("date",e.target.value)}/></div><div><Lbl>Status</Lbl><select value={f.status} onChange={e=>sv("status",e.target.value)}>{INJURY_STATUS.map(s=><option key={s}>{s}</option>)}</select></div></div><div style={{marginBottom:12}}><Lbl>How did it happen?</Lbl><input value={f.mechanism} onChange={e=>sv("mechanism",e.target.value)} placeholder="e.g. Got caught in heel hook"/></div><div style={{marginBottom:20}}><Lbl>Notes</Lbl><textarea value={f.notes} onChange={e=>sv("notes",e.target.value)} placeholder="Pain level, what aggravates it, treatment..."/></div><PBtn onClick={()=>onSave(f)}>Log injury</PBtn></BottomSheet>);
 }
 
-//  MAIN APP 
+//  MAIN APP
 export default function App(){
   const [tab,setTab]=useState("dashboard");
   const [sessions,setSessions]=useState([]);
