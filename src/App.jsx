@@ -468,9 +468,10 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
   const pbs=useMemo(()=>calcPersonalBests(sessions),[sessions]);
   const toggleGoal=useCallback(id=>{setGoals(p=>{const g=p.find(x=>x.id===id);if(!g)return p;const done=!g.done;if(done)showToast("Goal achieved! Keep pushing.");else showToast("Goal re-opened.");return p.map(x=>x.id===id?{...x,done}:x);});},[setGoals,showToast]);
   const deleteComp=id=>{setCompetitions(p=>p.filter(x=>x.id!==id));showToast("Competition removed");};
-  const subsData=useMemo(()=>[...sessions].sort((a,b)=>a.date.localeCompare(b.date)).slice(-20).map(s=>({d:s.date.slice(5),subs:s.taps_given||0,tapped:s.taps_received||0})),[sessions]);
-  const heatmap=useMemo(()=>{const today=new Date();today.setHours(0,0,0,0);const sun=new Date(today);sun.setDate(today.getDate()-today.getDay()-15*7);const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return[...Array(16)].map((_,w)=>{const cells=[...Array(7)].map((_,d)=>{const dt=new Date(sun);dt.setDate(sun.getDate()+w*7+d);const key=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;const mins=sessions.filter(s=>s.date===key).reduce((a,s)=>a+(s.duration||0),0);return{key,mins,label:dt.getDate()===1?MONTHS[dt.getMonth()]:""};});return cells;});},[sessions]);
+  const weeklySubsData=useMemo(()=>{const now=Date.now();return[...Array(8)].map((_,i)=>{const start=new Date(now-(7-i)*7*864e5),end=new Date(now-(6-i)*7*864e5);const wk=sessions.filter(s=>{const d=new Date(s.date);return d>=start&&d<end;});return{week:`${start.getMonth()+1}/${start.getDate()}`,subs:wk.reduce((a,s)=>a+(s.taps_given||0),0),tapped:wk.reduce((a,s)=>a+(s.taps_received||0),0)};});},[sessions]);
+  const heatmap=useMemo(()=>{const today=new Date();today.setHours(0,0,0,0);const sun=new Date(today);sun.setDate(today.getDate()-today.getDay()-15*7);const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return[...Array(16)].map((_,w)=>[...Array(7)].map((_,d)=>{const dt=new Date(sun);dt.setDate(sun.getDate()+w*7+d);const key=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;const mins=sessions.filter(s=>s.date===key).reduce((a,s)=>a+(s.duration||0),0);return{key,mins,monthLabel:dt.getDate()===1?MONTHS[dt.getMonth()]:""};}))},[sessions]);
   const partnerStats=useMemo(()=>{const m={};sessions.forEach(s=>{if(!s.partner?.trim())return;const n=s.partner.trim();if(!m[n])m[n]={name:n,count:0,subs:0,tapped:0};m[n].count++;m[n].subs+=s.taps_given||0;m[n].tapped+=s.taps_received||0;});return Object.values(m).sort((a,b)=>b.count-a.count);},[sessions]);
+  const summaryStats=useMemo(()=>({avgSubs:sessions.length>0?(totals.given/sessions.length).toFixed(1):"—",topPartner:partnerStats.length>0?partnerStats[0].name:"—",activeWeeks:heatmap.filter(w=>w.some(d=>d.mins>0)).length}),[sessions,totals,partnerStats,heatmap]);
 
   // Full-page comp detail view
   if(selComp){const medals=getMedals(selComp);return(<div className="fade-in">
@@ -503,30 +504,25 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
       <div style={card}><p style={{margin:"0 0 14px",fontSize:14,fontWeight:600,color:"#fff"}}>Weekly mat time</p><div style={{height:160}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weeklyData} margin={{top:0,right:4,bottom:0,left:-28}}><XAxis dataKey="week" tick={{fontSize:10,fill:"#555"}}/><YAxis tick={{fontSize:10,fill:"#555"}}/><Tooltip contentStyle={tt} formatter={v=>`${v} hrs`}/><Bar dataKey="hours" fill={LIME} radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div></div>
     </div>}
     {sub==="insights"&&<div>
-      {/* Submission rate */}
-      <div style={card}>
-        <p style={{margin:"0 0 2px",fontSize:14,fontWeight:600,color:"#fff"}}>Submission rate</p>
-        <p style={{margin:"0 0 14px",fontSize:12,color:"#555"}}>Subs landed vs. tapped — last {subsData.length} sessions</p>
-        {subsData.length===0?<p style={{margin:0,fontSize:13,color:"#555",textAlign:"center",padding:"20px 0"}}>No sessions logged yet</p>:<>
-          <div style={{height:150}}><ResponsiveContainer width="100%" height="100%"><BarChart data={subsData} margin={{top:0,right:4,bottom:0,left:-28}} barGap={2} barCategoryGap="30%"><XAxis dataKey="d" tick={{fontSize:8,fill:"#555"}} interval="preserveStartEnd"/><YAxis tick={{fontSize:10,fill:"#555"}} allowDecimals={false}/><Tooltip contentStyle={tt} formatter={(v,n)=>[v,n==="subs"?"Subs landed":"Times tapped"]}/><Bar dataKey="subs" fill={POS} radius={[4,4,0,0]} name="subs"/><Bar dataKey="tapped" fill="#E24B4A" radius={[4,4,0,0]} name="tapped"/></BarChart></ResponsiveContainer></div>
-          <div style={{display:"flex",gap:16,marginTop:10,justifyContent:"center"}}><span style={{fontSize:11,color:POS,display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:POS,display:"inline-block"}}/> Subs landed</span><span style={{fontSize:11,color:"#E24B4A",display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:"#E24B4A",display:"inline-block"}}/> Times tapped</span></div>
-        </>}
+      {/* Summary strip */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+        {[{l:"Avg subs/session",v:summaryStats.avgSubs,c:POS},{l:"Top partner",v:summaryStats.topPartner,c:"#fff",small:true},{l:"Active weeks",v:`${summaryStats.activeWeeks}/16`,c:LIME}].map(m=>(<div key={m.l} style={{...mc,textAlign:"center"}}><p style={{margin:0,fontSize:m.small?13:22,fontWeight:m.small?600:800,color:m.c,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.v}</p><p style={{margin:"4px 0 0",fontSize:10,color:"#555",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.5px",lineHeight:1.2}}>{m.l}</p></div>))}
       </div>
-      {/* Heatmap */}
+      {/* Heatmap hero */}
       <SH>Training heatmap</SH>
       <div style={{...card,paddingRight:12}}>
-        <p style={{margin:"0 0 12px",fontSize:12,color:"#555"}}>16 weeks of mat time</p>
         <div style={{display:"flex",gap:2}}>
-          {/* Day labels */}
-          <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4,paddingTop:0}}>
-            {["S","M","T","W","T","F","S"].map((d,i)=><div key={i} style={{height:14,fontSize:9,color:"#444",lineHeight:"14px",width:10}}>{i%2===1?d:""}</div>)}
+          {/* Day labels column */}
+          <div style={{display:"flex",flexDirection:"column",gap:2,marginRight:4,paddingTop:16}}>
+            {["S","M","T","W","T","F","S"].map((d,i)=><div key={i} style={{height:16,fontSize:9,color:"#444",lineHeight:"16px",width:10}}>{[1,3,5].includes(i)?d:""}</div>)}
           </div>
-          {/* Grid */}
+          {/* Grid with month labels */}
           <div style={{display:"flex",gap:2,flex:1,overflowX:"auto"}}>
             {heatmap.map((week,wi)=>(
               <div key={wi} style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
+                <div style={{height:14,fontSize:9,color:"#666",lineHeight:"14px",whiteSpace:"nowrap"}}>{week[0]?.monthLabel||""}</div>
                 {week.map((day,di)=>(
-                  <div key={di} style={{width:14,height:14,borderRadius:2,background:day.mins===0?"#2C2C2E":day.mins<60?LIME+"55":day.mins<120?LIME+"99":LIME,flexShrink:0}}/>
+                  <div key={di} style={{width:16,height:16,borderRadius:3,background:day.mins===0?"#2C2C2E":day.mins<60?LIME+"55":day.mins<120?LIME+"99":LIME,flexShrink:0}}/>
                 ))}
               </div>
             ))}
@@ -538,6 +534,14 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
           <span style={{fontSize:10,color:"#555"}}>More</span>
         </div>
       </div>
+      {/* Weekly submissions chart */}
+      <SH>Weekly submissions</SH>
+      <div style={card}>
+        {weeklySubsData.every(w=>w.subs===0&&w.tapped===0)?<p style={{margin:0,fontSize:13,color:"#555",textAlign:"center",padding:"20px 0"}}>No sessions logged yet</p>:<>
+          <div style={{height:150}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weeklySubsData} margin={{top:0,right:4,bottom:0,left:-28}} barGap={2} barCategoryGap="30%"><XAxis dataKey="week" tick={{fontSize:9,fill:"#555"}} interval="preserveStartEnd"/><YAxis tick={{fontSize:10,fill:"#555"}} allowDecimals={false}/><Tooltip contentStyle={tt} formatter={(v,n)=>[v,n==="subs"?"Subs landed":"Times tapped"]}/><Bar dataKey="subs" fill={POS} radius={[4,4,0,0]} name="subs"/><Bar dataKey="tapped" fill="#E24B4A" radius={[4,4,0,0]} name="tapped"/></BarChart></ResponsiveContainer></div>
+          <div style={{display:"flex",gap:16,marginTop:10,justifyContent:"center"}}><span style={{fontSize:11,color:POS,display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:POS,display:"inline-block"}}/> Subs landed</span><span style={{fontSize:11,color:"#E24B4A",display:"flex",alignItems:"center",gap:4}}><span style={{width:8,height:8,borderRadius:2,background:"#E24B4A",display:"inline-block"}}/> Times tapped</span></div>
+        </>}
+      </div>
       {/* Partner breakdown */}
       <SH>Partner breakdown</SH>
       {partnerStats.length===0?
@@ -548,16 +552,21 @@ const Progress=memo(function Progress({sessions,competitions,setCompetitions,goa
       :partnerStats.map(p=>{
         const total=p.subs+p.tapped;
         const subPct=total>0?Math.round(p.subs/total*100):0;
+        const verdict=subPct>=60?"Dominant":subPct>=40?"Even":"Getting worked";
+        const verdictColor=subPct>=60?POS:subPct>=40?LIME:"#E24B4A";
         return(<div key={p.name} style={card}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
             <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{p.name}</p>
-            <span style={{fontSize:12,color:"#555"}}>{p.count} session{p.count!==1?"s":""}</span>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              {total>0&&<span style={{fontSize:11,fontWeight:700,color:verdictColor,background:verdictColor+"20",padding:"3px 10px",borderRadius:50}}>{verdict}</span>}
+              <span style={{fontSize:12,color:"#555"}}>{p.count} session{p.count!==1?"s":""}</span>
+            </div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:total>0?10:0}}>
-            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:POS}}>{p.subs}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Subs landed</p></div>
-            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:"#E24B4A"}}>{p.tapped}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Times tapped</p></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:POS}}>{p.subs}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Subs</p></div>
+            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:"#E24B4A"}}>{p.tapped}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Tapped</p></div>
+            <div style={{textAlign:"center",background:"#2C2C2E",borderRadius:10,padding:"10px 8px"}}><p style={{margin:0,fontSize:20,fontWeight:700,color:total>0?verdictColor:"#555"}}>{total>0?`${subPct}%`:"—"}</p><p style={{margin:"3px 0 0",fontSize:10,color:"#555"}}>Sub%</p></div>
           </div>
-          {total>0&&<><div style={{height:5,borderRadius:3,background:"#E24B4A",overflow:"hidden"}}><div style={{width:`${subPct}%`,height:"100%",background:POS,borderRadius:3}}/></div><div style={{display:"flex",justifyContent:"space-between",marginTop:5}}><span style={{fontSize:11,color:POS,fontWeight:600}}>{subPct}% sub rate</span><span style={{fontSize:11,color:"#555"}}>{p.subs}/{total} total</span></div></>}
         </div>);})}
     </div>}
     {sub==="comp"&&<div>
