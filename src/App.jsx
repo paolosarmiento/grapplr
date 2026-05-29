@@ -596,7 +596,7 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
                 <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{t.name}</p>
                 <button onClick={cycleBelt} className="tap" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 10px",borderRadius:50,background:tb.color+"22",border:`1px solid ${tb.color}40`,cursor:"pointer",fontFamily:"inherit"}}>
                   <span style={{width:6,height:6,borderRadius:"50%",background:tb.color,flexShrink:0,boxShadow:`0 0 5px ${tb.color}80`}}/>
-                  <span style={{fontSize:10,color:tb.color,fontWeight:600}}>{tb.label}</span>
+                  <span style={{fontSize:10,color:"#fff",fontWeight:600}}>{tb.label}</span>
                 </button>
               </div>
               <span style={{fontSize:11,padding:"2px 10px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93"}}>{t.cat}</span>
