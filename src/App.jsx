@@ -588,16 +588,16 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
     </div>}
     {/* Technique cards */}
     <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
-      {filtered.map(t=>{const tb=BELTS.find(b=>b.id===(t.belt||"white"))||BELTS[0];return(
+      {filtered.map(t=>{const beltIds=["white","blue","purple","brown","black"];const tb=BELTS.find(b=>b.id===(t.belt||"white"))||BELTS[0];const cycleBelt=()=>setTechniques(p=>p.map(x=>x.id===t.id?{...x,belt:beltIds[(beltIds.indexOf(x.belt||"white")+1)%5]}:x));return(
         <div key={t.id} style={{...card,marginBottom:0}}>
           <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
                 <p style={{margin:0,fontSize:15,fontWeight:600,color:"#fff"}}>{t.name}</p>
-                <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 10px",borderRadius:50,background:tb.color+"22",border:`1px solid ${tb.color}40`}}>
+                <button onClick={cycleBelt} className="tap" style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 10px",borderRadius:50,background:tb.color+"22",border:`1px solid ${tb.color}40`,cursor:"pointer",fontFamily:"inherit"}}>
                   <span style={{width:6,height:6,borderRadius:"50%",background:tb.color,flexShrink:0,boxShadow:`0 0 5px ${tb.color}80`}}/>
                   <span style={{fontSize:10,color:tb.color,fontWeight:600}}>{tb.label}</span>
-                </span>
+                </button>
               </div>
               <span style={{fontSize:11,padding:"2px 10px",borderRadius:50,background:"#2C2C2E",color:"#8E8E93"}}>{t.cat}</span>
               {t.notes&&<p style={{margin:"8px 0 0",fontSize:13,color:"#8E8E93",lineHeight:1.5}}>{t.notes}</p>}
@@ -618,7 +618,7 @@ function Library({techniques,setTechniques,partners,setPartners,injuries,setInju
     {addOpen&&<BottomSheet onClose={()=>{setAddOpen(false);setAddName("");setAddNotes("");setAddBelt("white");}} title="Add technique">
       <div style={{marginBottom:12}}><Lbl>Name <span style={{color:"#E24B4A"}}>*</span></Lbl><input value={addName} onChange={e=>setAddName(e.target.value)} placeholder="e.g. Leg Lock" autoFocus/></div>
       <div style={{marginBottom:14}}><Lbl>Category</Lbl><div style={{display:"flex",flexWrap:"wrap",gap:8}}>{TECH_CATS.map(x=><Pill key={x} active={addCat===x} onClick={()=>setAddCat(x)} s={{fontSize:12,padding:"7px 14px"}}>{x}</Pill>)}</div></div>
-      <div style={{marginBottom:14}}><Lbl>Belt level</Lbl><div style={{display:"flex",justifyContent:"space-between",gap:4}}>{BELTS.slice(0,5).map(b=>(<button key={b.id} onClick={()=>setAddBelt(b.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"4px 0"}}><div style={{width:38,height:38,borderRadius:"50%",background:b.color,outline:addBelt===b.id?`3px solid ${LIME}`:"3px solid transparent",outlineOffset:2,transition:"all 0.2s",boxShadow:addBelt===b.id?`0 0 12px ${LIME}50`:"none"}}/><span style={{fontSize:10,color:addBelt===b.id?"#fff":"#636366",fontWeight:addBelt===b.id?600:400,fontFamily:"inherit"}}>{b.label}</span></button>))}</div></div>
+      <div style={{marginBottom:14}}><Lbl>Proficiency</Lbl><div style={{display:"flex",justifyContent:"space-between",gap:4}}>{BELTS.slice(0,5).map(b=>(<button key={b.id} onClick={()=>setAddBelt(b.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",padding:"4px 0"}}><div style={{width:38,height:38,borderRadius:"50%",background:b.color,outline:addBelt===b.id?`3px solid ${LIME}`:"3px solid transparent",outlineOffset:2,transition:"all 0.2s",boxShadow:addBelt===b.id?`0 0 12px ${LIME}50`:"none"}}/><span style={{fontSize:10,color:addBelt===b.id?"#fff":"#636366",fontWeight:addBelt===b.id?600:400,fontFamily:"inherit"}}>{b.label}</span></button>))}</div></div>
       <div style={{marginBottom:20}}><Lbl>Notes <span style={{color:"#555",fontWeight:400}}>(optional)</span></Lbl><textarea value={addNotes} onChange={e=>setAddNotes(e.target.value)} placeholder="Key details, setups, tips..." style={{minHeight:60}}/></div>
       <PBtn onClick={()=>{if(addName.trim()){setTechniques(p=>[...p,{id:Date.now(),name:addName.trim(),cat:addCat,belt:addBelt,notes:addNotes.trim(),favorite:false,skill:1}]);setAddName("");setAddNotes("");setAddBelt("white");setAddOpen(false);}}} disabled={!addName.trim()}>Add technique</PBtn>
     </BottomSheet>}
